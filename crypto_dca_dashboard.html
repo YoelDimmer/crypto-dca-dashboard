@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crypto DCA - C Moderado</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e14;
+  --bg-card: #131820;
+  --bg-card-hover: #181e28;
+  --border: #1f2630;
+  --text: #e6edf3;
+  --text-dim: #8b949e;
+  --green: #56d364;
+  --red: #ff6b6b;
+  --yellow: #f0c674;
+  --blue: #58a6ff;
+  --purple: #bc8cff;
+  --orange: #ff7e3f;
+  --emergency: #ff3860;
+  --display: 'Space Grotesk', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--display);
+  min-height: 100vh;
+  padding: 24px;
+  font-size: 15px;
+}
+
+.container { max-width: 1280px; margin: 0 auto; }
+
+/* HEADER */
+.header {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  margin-bottom: 32px; padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.header h1 {
+  font-size: 32px; font-weight: 700; letter-spacing: -1px;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.header .subtitle { color: var(--text-dim); font-size: 13px; margin-top: 4px; font-family: var(--mono); }
+.header-actions { display: flex; gap: 8px; }
+
+button {
+  background: var(--bg-card); border: 1px solid var(--border); color: var(--text);
+  padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px;
+  font-family: var(--display); font-weight: 500; transition: all 0.15s;
+}
+button:hover { background: var(--bg-card-hover); border-color: var(--blue); }
+button.primary { background: var(--blue); color: var(--bg); border-color: var(--blue); }
+button.primary:hover { background: #4a8de0; border-color: #4a8de0; }
+button.danger { color: var(--red); border-color: var(--red); }
+button.danger:hover { background: var(--red); color: var(--bg); }
+
+/* SETTINGS PANEL */
+.settings {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+  padding: 20px; margin-bottom: 24px; display: grid;
+  grid-template-columns: repeat(4, 1fr); gap: 16px;
+}
+.setting-group label {
+  display: block; color: var(--text-dim); font-size: 11px;
+  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;
+  font-family: var(--mono); font-weight: 500;
+}
+.setting-group input {
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
+  color: var(--text); padding: 10px 12px; border-radius: 6px;
+  font-family: var(--mono); font-size: 14px;
+}
+.setting-group input:focus { border-color: var(--blue); outline: none; }
+
+/* MAIN GRID */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+/* PORTFOLIO SUMMARY */
+.summary {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+  padding: 24px;
+}
+.summary-title { color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; font-family: var(--mono); }
+.summary-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 24px;
+}
+.summary-stat .label {
+  color: var(--text-dim); font-size: 11px; text-transform: uppercase;
+  letter-spacing: 1px; margin-bottom: 6px; font-family: var(--mono);
+}
+.summary-stat .value {
+  font-size: 24px; font-weight: 700; font-family: var(--mono);
+}
+.summary-stat .sub {
+  color: var(--text-dim); font-size: 12px; margin-top: 4px; font-family: var(--mono);
+}
+.profit-positive { color: var(--green); }
+.profit-negative { color: var(--red); }
+
+/* MONTHLY ALLOCATION (lo más importante) */
+.allocation {
+  background: linear-gradient(135deg, #131820 0%, #1a2030 100%);
+  border: 1px solid var(--border); border-radius: 12px;
+  padding: 28px; position: relative; overflow: hidden;
+}
+.allocation::before {
+  content: ''; position: absolute; top: 0; right: 0; width: 280px; height: 280px;
+  background: radial-gradient(circle, rgba(88, 166, 255, 0.08), transparent 70%);
+  pointer-events: none;
+}
+.allocation-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 24px;
+}
+.allocation-title {
+  font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px;
+}
+.allocation-title-icon {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--blue);
+  box-shadow: 0 0 12px var(--blue); animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.allocation-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+}
+.alloc-card {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+  padding: 18px; transition: all 0.2s; position: relative;
+}
+.alloc-card:hover { border-color: var(--blue); transform: translateY(-2px); }
+.alloc-symbol {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 12px;
+}
+.alloc-symbol .ticker {
+  font-family: var(--mono); font-weight: 700; font-size: 16px;
+  letter-spacing: 0.5px;
+}
+.alloc-symbol .pct {
+  font-family: var(--mono); color: var(--text-dim); font-size: 12px;
+  background: var(--bg-card); padding: 2px 8px; border-radius: 4px;
+}
+.alloc-amount {
+  font-size: 28px; font-weight: 700; font-family: var(--mono); color: var(--green);
+  margin-bottom: 6px;
+}
+.alloc-detail {
+  color: var(--text-dim); font-size: 11px; font-family: var(--mono); line-height: 1.6;
+}
+.alloc-mult {
+  display: inline-block; margin-top: 8px; padding: 3px 10px;
+  border-radius: 4px; font-family: var(--mono); font-weight: 700; font-size: 11px;
+}
+.mult-1 { background: rgba(139, 148, 158, 0.15); color: var(--text-dim); }
+.mult-15 { background: rgba(240, 198, 116, 0.15); color: var(--yellow); }
+.mult-20 { background: rgba(255, 126, 63, 0.15); color: var(--orange); }
+.mult-25 { background: rgba(255, 107, 107, 0.2); color: var(--red); }
+
+/* EMERGENCY ALERT */
+.emergency-alert {
+  background: rgba(255, 56, 96, 0.1); border: 1px solid var(--emergency);
+  border-radius: 10px; padding: 16px 20px; margin-top: 20px;
+  display: flex; align-items: center; gap: 12px;
+}
+.emergency-alert .icon { font-size: 24px; }
+.emergency-alert .text { flex: 1; }
+.emergency-alert .title { color: var(--emergency); font-weight: 700; font-size: 14px; }
+.emergency-alert .desc { color: var(--text-dim); font-size: 12px; margin-top: 2px; font-family: var(--mono); }
+
+/* POSITIONS TABLE */
+.positions {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+  padding: 24px;
+}
+.positions-title {
+  font-size: 18px; font-weight: 600; margin-bottom: 16px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.positions-table { width: 100%; border-collapse: collapse; }
+.positions-table th {
+  text-align: left; color: var(--text-dim); font-size: 11px;
+  text-transform: uppercase; letter-spacing: 1px; padding: 10px 12px;
+  border-bottom: 1px solid var(--border); font-family: var(--mono); font-weight: 500;
+}
+.positions-table td {
+  padding: 14px 12px; font-family: var(--mono); font-size: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.positions-table tr:last-child td { border-bottom: none; }
+.positions-table .ticker-cell { font-weight: 700; }
+.tag {
+  display: inline-block; padding: 2px 8px; border-radius: 4px;
+  font-size: 11px; font-weight: 600;
+}
+.tag-bull { background: rgba(86, 211, 100, 0.15); color: var(--green); }
+.tag-bear { background: rgba(255, 107, 107, 0.15); color: var(--red); }
+
+/* TRANSACTIONS */
+.transactions {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+  padding: 24px;
+}
+.transactions-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px;
+}
+.transactions-title { font-size: 18px; font-weight: 600; }
+.add-tx-form {
+  display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 12px;
+  margin-bottom: 16px; padding: 16px; background: var(--bg); border-radius: 8px;
+  border: 1px dashed var(--border);
+}
+.add-tx-form input, .add-tx-form select {
+  background: var(--bg-card); border: 1px solid var(--border); color: var(--text);
+  padding: 8px 10px; border-radius: 6px; font-family: var(--mono); font-size: 13px;
+}
+.tx-list { max-height: 320px; overflow-y: auto; }
+.tx-list::-webkit-scrollbar { width: 6px; }
+.tx-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.tx-row {
+  display: grid; grid-template-columns: 110px 80px 1fr 1fr 1fr auto;
+  gap: 12px; padding: 10px 12px; border-bottom: 1px solid var(--border);
+  font-family: var(--mono); font-size: 13px; align-items: center;
+}
+.tx-row:hover { background: var(--bg); }
+.tx-delete {
+  background: transparent; border: none; color: var(--text-dim);
+  cursor: pointer; padding: 4px 8px; font-size: 14px;
+}
+.tx-delete:hover { color: var(--red); background: transparent; border: none; }
+
+/* HOW IT WORKS */
+.help {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+  padding: 24px; font-size: 13px; line-height: 1.7;
+}
+.help h3 {
+  font-size: 14px; color: var(--blue); margin-bottom: 12px;
+  text-transform: uppercase; letter-spacing: 1px; font-family: var(--mono);
+}
+.help-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.help-section { color: var(--text-dim); }
+.help-section strong { color: var(--text); }
+.rule-row {
+  display: flex; justify-content: space-between; padding: 6px 0;
+  border-bottom: 1px dashed var(--border); font-family: var(--mono);
+}
+.rule-row:last-child { border: none; }
+
+/* LOADING */
+.loading {
+  display: inline-block; width: 12px; height: 12px;
+  border: 2px solid var(--border); border-top-color: var(--blue);
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 900px) {
+  .summary-grid, .allocation-grid, .help-grid { grid-template-columns: 1fr 1fr; }
+  .settings { grid-template-columns: 1fr 1fr; }
+  .add-tx-form { grid-template-columns: 1fr 1fr; }
+  .tx-row { grid-template-columns: 1fr 1fr; gap: 4px; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <h1>Crypto DCA · C Moderado</h1>
+    <div class="subtitle">BTC 55% · ETH 25% · SOL 10% · BNB 10% — buy-only system</div>
+  </div>
+  <div class="header-actions">
+    <button onclick="refreshPrices()">↻ Actualizar precios</button>
+    <button onclick="exportData()">↓ Export JSON</button>
+    <button onclick="importData()">↑ Import JSON</button>
+    <button class="danger" onclick="resetData()">Reset</button>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="settings">
+  <div class="setting-group">
+    <label>Base mensual (USD)</label>
+    <input type="number" id="baseMonthly" value="300" onchange="saveSettings()" min="0" step="10">
+  </div>
+  <div class="setting-group">
+    <label>Capital de emergencia (USD)</label>
+    <input type="number" id="emergencyCapital" value="1000" onchange="saveSettings()" min="0" step="50">
+  </div>
+  <div class="setting-group">
+    <label>Trigger emergencia (% caída en 30d)</label>
+    <input type="number" id="emergencyTrigger" value="50" onchange="saveSettings()" min="20" max="80" step="5">
+  </div>
+  <div class="setting-group">
+    <label>Última actualización</label>
+    <input type="text" id="lastUpdate" value="—" disabled style="background:var(--bg-card);">
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main-grid">
+
+  <!-- PORTFOLIO SUMMARY -->
+  <div class="summary">
+    <div class="summary-title">📊 Resumen del portfolio</div>
+    <div class="summary-grid">
+      <div class="summary-stat">
+        <div class="label">Total invertido</div>
+        <div class="value" id="totalInvested">$0</div>
+      </div>
+      <div class="summary-stat">
+        <div class="label">Valor actual</div>
+        <div class="value" id="totalValue">$0</div>
+      </div>
+      <div class="summary-stat">
+        <div class="label">Ganancia/Pérdida</div>
+        <div class="value" id="totalPnL">$0</div>
+        <div class="sub" id="totalPnLPct">0.00%</div>
+      </div>
+      <div class="summary-stat">
+        <div class="label">Compras totales</div>
+        <div class="value" id="totalBuys">0</div>
+      </div>
+      <div class="summary-stat">
+        <div class="label">Próxima compra (mes)</div>
+        <div class="value" id="nextMonthTotal" style="color: var(--blue)">$0</div>
+        <div class="sub" id="multiplierUsed">multiplicador 1.00x</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALLOCATION FOR THIS MONTH -->
+  <div class="allocation">
+    <div class="allocation-header">
+      <div class="allocation-title">
+        <span class="allocation-title-icon"></span>
+        Compra de este mes
+      </div>
+      <div style="font-family: var(--mono); color: var(--text-dim); font-size: 13px;" id="currentMonth">—</div>
+    </div>
+    <div class="allocation-grid" id="allocationCards">
+      <!-- Cards generados por JS -->
+    </div>
+    <div id="emergencyAlertContainer"></div>
+  </div>
+
+  <!-- POSITIONS TABLE -->
+  <div class="positions">
+    <div class="positions-title">
+      <span>💼 Mis posiciones</span>
+      <span style="font-family:var(--mono); font-size:12px; color:var(--text-dim);">precio en vivo Binance</span>
+    </div>
+    <table class="positions-table">
+      <thead>
+        <tr>
+          <th>Asset</th>
+          <th>Holdings</th>
+          <th>Cost basis</th>
+          <th>Precio actual</th>
+          <th>Inversión</th>
+          <th>Valor actual</th>
+          <th>P/L</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody id="positionsBody"></tbody>
+    </table>
+  </div>
+
+  <!-- TRANSACTIONS -->
+  <div class="transactions">
+    <div class="transactions-header">
+      <div class="transactions-title">📝 Registrar nueva compra</div>
+      <div style="font-family: var(--mono); font-size: 12px; color: var(--text-dim);">
+        Cargá tus compras reales acá
+      </div>
+    </div>
+    
+    <div class="add-tx-form">
+      <input type="date" id="txDate" required>
+      <select id="txAsset">
+        <option value="BTC">BTC</option>
+        <option value="ETH">ETH</option>
+        <option value="SOL">SOL</option>
+        <option value="BNB">BNB</option>
+      </select>
+      <input type="number" id="txAmount" placeholder="USD invertidos" step="0.01" min="0">
+      <input type="number" id="txPrice" placeholder="Precio compra" step="0.01" min="0">
+      <button class="primary" onclick="addTransaction()">+ Agregar</button>
+    </div>
+
+    <div style="margin-top: 24px;">
+      <div style="color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; font-family: var(--mono);">
+        Historial de compras (<span id="txCount">0</span>)
+      </div>
+      <div class="tx-list" id="txList"></div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="help">
+    <h3>📖 Cómo funciona el sistema</h3>
+    <div class="help-grid">
+      <div class="help-section">
+        <strong>Reglas de compra (C Moderado)</strong><br>
+        El multiplicador se calcula sobre tu cost basis (precio promedio de compra) por cada asset:
+        <div style="margin-top: 12px;">
+          <div class="rule-row"><span>Sin pérdida o en ganancia</span><strong>1.00x base</strong></div>
+          <div class="rule-row"><span>Pérdida -10% a -25%</span><strong>1.50x base</strong></div>
+          <div class="rule-row"><span>Pérdida -25% a -40%</span><strong>2.00x base</strong></div>
+          <div class="rule-row"><span>Pérdida más de -40%</span><strong>2.50x base</strong></div>
+        </div>
+      </div>
+      <div class="help-section">
+        <strong>Capital de emergencia</strong><br>
+        Si UN asset cae más de 50% (configurable) desde su peak en los últimos 30 días, se activa la alerta de emergencia. Ahí podés invertir el capital de emergencia adicional al multiplicador 2.5x.<br><br>
+        <strong>Distribución de la compra mensual:</strong> el sistema calcula automáticamente cuánto va a cada asset según el % asignado y el multiplicador específico de ese asset.<br><br>
+        <strong>Historial:</strong> exportá JSON regularmente como backup. Si formateás la PC, importás el JSON y todo vuelve.
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+// ============================================
+// STATE & CONFIG
+// ============================================
+const ASSETS = [
+  { ticker: 'BTC', symbol: 'BTCUSDT', alloc: 0.55, color: '#f7931a' },
+  { ticker: 'ETH', symbol: 'ETHUSDT', alloc: 0.25, color: '#627eea' },
+  { ticker: 'SOL', symbol: 'SOLUSDT', alloc: 0.10, color: '#14f195' },
+  { ticker: 'BNB', symbol: 'BNBUSDT', alloc: 0.10, color: '#f3ba2f' },
+];
+
+let prices = { BTC: 0, ETH: 0, SOL: 0, BNB: 0 };
+let priceHistory30d = { BTC: [], ETH: [], SOL: [], BNB: [] };
+let transactions = [];
+let settings = { baseMonthly: 300, emergencyCapital: 1000, emergencyTrigger: 50 };
+
+// ============================================
+// LOAD/SAVE STATE
+// ============================================
+function loadState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('cryptoDCA') || '{}');
+    transactions = saved.transactions || [];
+    settings = { ...settings, ...(saved.settings || {}) };
+    document.getElementById('baseMonthly').value = settings.baseMonthly;
+    document.getElementById('emergencyCapital').value = settings.emergencyCapital;
+    document.getElementById('emergencyTrigger').value = settings.emergencyTrigger;
+  } catch (e) { console.error('Error loading state:', e); }
+}
+
+function saveState() {
+  localStorage.setItem('cryptoDCA', JSON.stringify({ transactions, settings }));
+}
+
+function saveSettings() {
+  settings.baseMonthly = parseFloat(document.getElementById('baseMonthly').value) || 300;
+  settings.emergencyCapital = parseFloat(document.getElementById('emergencyCapital').value) || 1000;
+  settings.emergencyTrigger = parseFloat(document.getElementById('emergencyTrigger').value) || 50;
+  saveState();
+  render();
+}
+
+// ============================================
+// FETCH PRICES FROM BINANCE
+// ============================================
+async function refreshPrices() {
+  document.getElementById('lastUpdate').value = 'cargando...';
+  try {
+    // Precios actuales
+    const symbols = ASSETS.map(a => `"${a.symbol}"`).join(',');
+    const url = `https://api.binance.com/api/v3/ticker/price?symbols=[${symbols}]`;
+    const res = await fetch(url);
+    const data = await res.json();
+    
+    data.forEach(item => {
+      const asset = ASSETS.find(a => a.symbol === item.symbol);
+      if (asset) prices[asset.ticker] = parseFloat(item.price);
+    });
+    
+    // Histórico 30d para detectar emergencia
+    for (const asset of ASSETS) {
+      try {
+        const histUrl = `https://api.binance.com/api/v3/klines?symbol=${asset.symbol}&interval=1d&limit=30`;
+        const histRes = await fetch(histUrl);
+        const histData = await histRes.json();
+        priceHistory30d[asset.ticker] = histData.map(k => ({
+          time: k[0],
+          high: parseFloat(k[2]),
+          low: parseFloat(k[3]),
+          close: parseFloat(k[4]),
+        }));
+      } catch (e) { console.error(`Error histórico ${asset.ticker}:`, e); }
+    }
+    
+    document.getElementById('lastUpdate').value = new Date().toLocaleString('es-AR', { 
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+    render();
+  } catch (e) {
+    document.getElementById('lastUpdate').value = 'ERROR - revisar conexión';
+    console.error('Error fetching prices:', e);
+  }
+}
+
+// ============================================
+// CALCULATIONS
+// ============================================
+function getPosition(ticker) {
+  const txs = transactions.filter(t => t.asset === ticker);
+  const totalQty = txs.reduce((s, t) => s + (t.amount / t.price), 0);
+  const totalInvested = txs.reduce((s, t) => s + t.amount, 0);
+  const costBasis = totalQty > 0 ? totalInvested / totalQty : 0;
+  const currentPrice = prices[ticker] || 0;
+  const currentValue = totalQty * currentPrice;
+  const pnl = currentValue - totalInvested;
+  const pnlPct = totalInvested > 0 ? (pnl / totalInvested) * 100 : 0;
+  // dd vs cost basis (positivo = en pérdida)
+  const ddVsCost = costBasis > 0 ? (costBasis - currentPrice) / costBasis : 0;
+  
+  return { ticker, totalQty, totalInvested, costBasis, currentPrice, currentValue, pnl, pnlPct, ddVsCost };
+}
+
+function getMultiplier(ddVsCost) {
+  if (ddVsCost <= 0) return 1.0;
+  if (ddVsCost >= 0.40) return 2.5;
+  if (ddVsCost >= 0.25) return 2.0;
+  if (ddVsCost >= 0.10) return 1.5;
+  return 1.0;
+}
+
+function isEmergency(ticker) {
+  const hist = priceHistory30d[ticker];
+  if (!hist || hist.length < 5) return false;
+  const peak30d = Math.max(...hist.map(h => h.high));
+  const current = prices[ticker];
+  if (!current || !peak30d) return false;
+  const dropPct = ((peak30d - current) / peak30d) * 100;
+  return dropPct >= settings.emergencyTrigger;
+}
+
+// ============================================
+// RENDER
+// ============================================
+function render() {
+  const positions = ASSETS.map(a => getPosition(a.ticker));
+  
+  // Summary
+  const totalInvested = positions.reduce((s, p) => s + p.totalInvested, 0);
+  const totalValue = positions.reduce((s, p) => s + p.currentValue, 0);
+  const totalPnL = totalValue - totalInvested;
+  const totalPnLPct = totalInvested > 0 ? (totalPnL / totalInvested) * 100 : 0;
+  
+  document.getElementById('totalInvested').textContent = `$${totalInvested.toFixed(2)}`;
+  document.getElementById('totalValue').textContent = `$${totalValue.toFixed(2)}`;
+  document.getElementById('totalPnL').textContent = `${totalPnL >= 0 ? '+' : ''}$${totalPnL.toFixed(2)}`;
+  document.getElementById('totalPnL').className = 'value ' + (totalPnL >= 0 ? 'profit-positive' : 'profit-negative');
+  document.getElementById('totalPnLPct').textContent = `${totalPnLPct >= 0 ? '+' : ''}${totalPnLPct.toFixed(2)}%`;
+  document.getElementById('totalPnLPct').className = 'sub ' + (totalPnLPct >= 0 ? 'profit-positive' : 'profit-negative');
+  document.getElementById('totalBuys').textContent = transactions.length;
+  
+  // Allocation cards (ESTE MES)
+  const monthName = new Date().toLocaleString('es-AR', { month: 'long', year: 'numeric' });
+  document.getElementById('currentMonth').textContent = monthName;
+  
+  let totalThisMonth = 0;
+  let weightedMult = 0;
+  let totalAlloc = 0;
+  
+  const cards = ASSETS.map(asset => {
+    const pos = positions.find(p => p.ticker === asset.ticker);
+    const mult = getMultiplier(pos.ddVsCost);
+    const baseForAsset = settings.baseMonthly * asset.alloc;
+    const amountToBuy = baseForAsset * mult;
+    totalThisMonth += amountToBuy;
+    weightedMult += mult * asset.alloc;
+    totalAlloc += asset.alloc;
+    
+    const multClass = mult === 1.0 ? 'mult-1' : mult === 1.5 ? 'mult-15' : mult === 2.0 ? 'mult-20' : 'mult-25';
+    const ddText = pos.ddVsCost > 0 ? `Pérdida vs cost basis: -${(pos.ddVsCost * 100).toFixed(1)}%` :
+                   pos.costBasis > 0 ? `Sin pérdida (${pos.pnlPct >= 0 ? '+' : ''}${pos.pnlPct.toFixed(1)}%)` :
+                   `Sin holdings previos`;
+    
+    const qtyEstimate = pos.currentPrice > 0 ? amountToBuy / pos.currentPrice : 0;
+    
+    return `
+      <div class="alloc-card">
+        <div class="alloc-symbol">
+          <span class="ticker" style="color:${asset.color}">${asset.ticker}</span>
+          <span class="pct">${(asset.alloc * 100).toFixed(0)}%</span>
+        </div>
+        <div class="alloc-amount">$${amountToBuy.toFixed(2)}</div>
+        <div class="alloc-detail">
+          ≈ ${qtyEstimate.toFixed(6)} ${asset.ticker}<br>
+          @ $${pos.currentPrice.toFixed(2)}<br>
+          ${ddText}
+        </div>
+        <div class="alloc-mult ${multClass}">multiplicador ${mult.toFixed(2)}x</div>
+      </div>
+    `;
+  }).join('');
+  
+  document.getElementById('allocationCards').innerHTML = cards;
+  document.getElementById('nextMonthTotal').textContent = `$${totalThisMonth.toFixed(2)}`;
+  document.getElementById('multiplierUsed').textContent = `multiplicador promedio ${weightedMult.toFixed(2)}x`;
+  
+  // Emergency alerts
+  const emergencyAssets = ASSETS.filter(a => isEmergency(a.ticker));
+  let emergencyHTML = '';
+  if (emergencyAssets.length > 0) {
+    emergencyHTML = `
+      <div class="emergency-alert">
+        <div class="icon">🚨</div>
+        <div class="text">
+          <div class="title">EMERGENCIA - Caída ≥${settings.emergencyTrigger}% en 30d</div>
+          <div class="desc">
+            ${emergencyAssets.map(a => a.ticker).join(', ')} cayeron significativamente.
+            Considerá usar el capital de emergencia ($${settings.emergencyCapital.toFixed(2)}) para comprar extra.
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  document.getElementById('emergencyAlertContainer').innerHTML = emergencyHTML;
+  
+  // Positions table
+  const positionsHTML = positions.map(p => {
+    const status = p.totalInvested === 0 ? '<span class="tag" style="background:rgba(139,148,158,0.15);color:var(--text-dim)">sin posición</span>' :
+                   p.pnlPct >= 0 ? '<span class="tag tag-bull">↑ ganando</span>' :
+                   '<span class="tag tag-bear">↓ perdiendo</span>';
+    return `
+      <tr>
+        <td class="ticker-cell" style="color:${ASSETS.find(a => a.ticker === p.ticker).color}">${p.ticker}</td>
+        <td>${p.totalQty.toFixed(8)}</td>
+        <td>${p.costBasis > 0 ? '$' + p.costBasis.toFixed(2) : '—'}</td>
+        <td>$${p.currentPrice.toFixed(2)}</td>
+        <td>$${p.totalInvested.toFixed(2)}</td>
+        <td>$${p.currentValue.toFixed(2)}</td>
+        <td class="${p.pnl >= 0 ? 'profit-positive' : 'profit-negative'}">
+          ${p.pnl >= 0 ? '+' : ''}$${p.pnl.toFixed(2)}<br>
+          <small>(${p.pnlPct >= 0 ? '+' : ''}${p.pnlPct.toFixed(2)}%)</small>
+        </td>
+        <td>${status}</td>
+      </tr>
+    `;
+  }).join('');
+  document.getElementById('positionsBody').innerHTML = positionsHTML;
+  
+  // Transactions list
+  const txSorted = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const txHTML = txSorted.map((t, idx) => {
+    const realIdx = transactions.indexOf(t);
+    return `
+      <div class="tx-row">
+        <div>${t.date}</div>
+        <div style="color:${ASSETS.find(a => a.ticker === t.asset).color}; font-weight:700;">${t.asset}</div>
+        <div>$${t.amount.toFixed(2)}</div>
+        <div>@ $${t.price.toFixed(2)}</div>
+        <div>${(t.amount / t.price).toFixed(8)}</div>
+        <button class="tx-delete" onclick="deleteTransaction(${realIdx})" title="Borrar">✕</button>
+      </div>
+    `;
+  }).join('');
+  document.getElementById('txList').innerHTML = txHTML || '<div style="text-align:center;padding:24px;color:var(--text-dim);">Sin compras registradas todavía</div>';
+  document.getElementById('txCount').textContent = transactions.length;
+}
+
+// ============================================
+// TRANSACTIONS
+// ============================================
+function addTransaction() {
+  const date = document.getElementById('txDate').value;
+  const asset = document.getElementById('txAsset').value;
+  const amount = parseFloat(document.getElementById('txAmount').value);
+  const price = parseFloat(document.getElementById('txPrice').value);
+  
+  if (!date || !asset || !amount || !price || amount <= 0 || price <= 0) {
+    alert('Completá todos los campos con valores válidos');
+    return;
+  }
+  
+  transactions.push({ date, asset, amount, price });
+  saveState();
+  render();
+  
+  // Clear form
+  document.getElementById('txAmount').value = '';
+  document.getElementById('txPrice').value = '';
+}
+
+function deleteTransaction(idx) {
+  if (!confirm('¿Borrar esta compra del historial?')) return;
+  transactions.splice(idx, 1);
+  saveState();
+  render();
+}
+
+// ============================================
+// EXPORT/IMPORT
+// ============================================
+function exportData() {
+  const data = { transactions, settings, exported: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `crypto-dca-backup-${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+}
+
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (data.transactions) transactions = data.transactions;
+        if (data.settings) settings = { ...settings, ...data.settings };
+        saveState();
+        document.getElementById('baseMonthly').value = settings.baseMonthly;
+        document.getElementById('emergencyCapital').value = settings.emergencyCapital;
+        document.getElementById('emergencyTrigger').value = settings.emergencyTrigger;
+        render();
+        alert(`✓ Importadas ${transactions.length} compras`);
+      } catch (err) {
+        alert('Error al importar: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function resetData() {
+  if (!confirm('⚠️ Esto va a borrar TODAS las compras y configuración. ¿Estás seguro?')) return;
+  if (!confirm('Última oportunidad. ¿Realmente borrar todo?')) return;
+  localStorage.removeItem('cryptoDCA');
+  transactions = [];
+  settings = { baseMonthly: 300, emergencyCapital: 1000, emergencyTrigger: 50 };
+  document.getElementById('baseMonthly').value = 300;
+  document.getElementById('emergencyCapital').value = 1000;
+  document.getElementById('emergencyTrigger').value = 50;
+  render();
+}
+
+// ============================================
+// INIT
+// ============================================
+document.getElementById('txDate').valueAsDate = new Date();
+loadState();
+render();
+refreshPrices();
+
+// Auto-refresh prices every 60s
+setInterval(refreshPrices, 60000);
+</script>
+
+</body>
+</html>
