@@ -1364,8 +1364,7 @@ function render() {
   document.getElementById('txList').innerHTML = txHTML || '<div style="text-align:center;padding:24px;color:var(--text-dim);">Sin transacciones registradas todavía</div>';
   document.getElementById('txCount').textContent = transactions.length;
   
-  // USDT balance
-  const usdtBalance = getUSDTBalance();
+  // USDT detailed breakdown (usdtBalance ya está declarado arriba)
   const usdtFromSells = transactions.filter(t => t.type === 'sell').reduce((s, t) => s + (t.amount || 0), 0);
   const usdtFromIns = transactions.filter(t => t.type === 'usdt_in').reduce((s, t) => s + (t.amount || 0), 0);
   const usdtFromOuts = transactions.filter(t => t.type === 'usdt_out').reduce((s, t) => s + (t.amount || 0), 0);
@@ -2034,6 +2033,8 @@ function populateRulesInputs() {
   document.getElementById('ruleMult4').value = sellRules.multipliers.rule4_dd;
   document.getElementById('ruleSellPct').value = (sellRules.sellPct * 100).toFixed(0);
 }
+
+function renderSellRules(positions) {
   let triggeredRules = [];  // Track all triggered rules across assets
   let closeRules = [];       // Rules within 80% of trigger
   
