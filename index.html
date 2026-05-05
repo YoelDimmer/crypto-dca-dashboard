@@ -3,10 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Crypto DCA - C Moderado</title>
+<title>Crypto DCA Pro · C Moderado</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root {
   --bg: #0a0e14;
@@ -29,12 +30,8 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--display);
-  min-height: 100vh;
-  padding: 24px;
-  font-size: 15px;
+  background: var(--bg); color: var(--text); font-family: var(--display);
+  min-height: 100vh; padding: 24px; font-size: 15px;
 }
 
 .container { max-width: 1280px; margin: 0 auto; }
@@ -42,7 +39,7 @@ body {
 /* HEADER */
 .header {
   display: flex; justify-content: space-between; align-items: flex-end;
-  margin-bottom: 32px; padding-bottom: 20px;
+  margin-bottom: 24px; padding-bottom: 20px;
   border-bottom: 1px solid var(--border);
 }
 .header h1 {
@@ -51,7 +48,7 @@ body {
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
 .header .subtitle { color: var(--text-dim); font-size: 13px; margin-top: 4px; font-family: var(--mono); }
-.header-actions { display: flex; gap: 8px; }
+.header-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 
 button {
   background: var(--bg-card); border: 1px solid var(--border); color: var(--text);
@@ -63,6 +60,27 @@ button.primary { background: var(--blue); color: var(--bg); border-color: var(--
 button.primary:hover { background: #4a8de0; border-color: #4a8de0; }
 button.danger { color: var(--red); border-color: var(--red); }
 button.danger:hover { background: var(--red); color: var(--bg); }
+
+/* TABS */
+.tabs {
+  display: flex; gap: 4px; margin-bottom: 24px;
+  border-bottom: 1px solid var(--border); overflow-x: auto;
+}
+.tab {
+  background: transparent; border: none; color: var(--text-dim);
+  padding: 12px 20px; cursor: pointer; font-family: var(--display);
+  font-size: 14px; font-weight: 500; position: relative;
+  transition: color 0.15s; white-space: nowrap;
+  border-radius: 0;
+}
+.tab:hover { color: var(--text); background: transparent; border: none; }
+.tab.active { color: var(--blue); }
+.tab.active::after {
+  content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px;
+  background: var(--blue);
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
 
 /* SETTINGS PANEL */
 .settings {
@@ -83,35 +101,34 @@ button.danger:hover { background: var(--red); color: var(--bg); }
 .setting-group input:focus { border-color: var(--blue); outline: none; }
 
 /* MAIN GRID */
-.main-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 24px;
-}
+.main-grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
 
-/* PORTFOLIO SUMMARY */
-.summary {
+/* CARDS */
+.card {
   background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
   padding: 24px;
 }
-.summary-title { color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; font-family: var(--mono); }
-.summary-grid {
-  display: grid; grid-template-columns: repeat(5, 1fr); gap: 24px;
+.card-title {
+  font-size: 18px; font-weight: 600; margin-bottom: 16px;
+  display: flex; justify-content: space-between; align-items: center;
 }
+.card-subtitle {
+  color: var(--text-dim); font-size: 11px; text-transform: uppercase;
+  letter-spacing: 2px; margin-bottom: 16px; font-family: var(--mono);
+}
+
+/* SUMMARY */
+.summary-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 24px; }
 .summary-stat .label {
   color: var(--text-dim); font-size: 11px; text-transform: uppercase;
   letter-spacing: 1px; margin-bottom: 6px; font-family: var(--mono);
 }
-.summary-stat .value {
-  font-size: 24px; font-weight: 700; font-family: var(--mono);
-}
-.summary-stat .sub {
-  color: var(--text-dim); font-size: 12px; margin-top: 4px; font-family: var(--mono);
-}
+.summary-stat .value { font-size: 24px; font-weight: 700; font-family: var(--mono); }
+.summary-stat .sub { color: var(--text-dim); font-size: 12px; margin-top: 4px; font-family: var(--mono); }
 .profit-positive { color: var(--green); }
 .profit-negative { color: var(--red); }
 
-/* MONTHLY ALLOCATION (lo más importante) */
+/* MONTHLY ALLOCATION */
 .allocation {
   background: linear-gradient(135deg, #131820 0%, #1a2030 100%);
   border: 1px solid var(--border); border-radius: 12px;
@@ -137,22 +154,16 @@ button.danger:hover { background: var(--red); color: var(--bg); }
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
 }
-.allocation-grid {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
-}
+.allocation-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
 .alloc-card {
   background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
-  padding: 18px; transition: all 0.2s; position: relative;
+  padding: 18px; transition: all 0.2s;
 }
 .alloc-card:hover { border-color: var(--blue); transform: translateY(-2px); }
 .alloc-symbol {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 12px;
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
 }
-.alloc-symbol .ticker {
-  font-family: var(--mono); font-weight: 700; font-size: 16px;
-  letter-spacing: 0.5px;
-}
+.alloc-symbol .ticker { font-family: var(--mono); font-weight: 700; font-size: 16px; }
 .alloc-symbol .pct {
   font-family: var(--mono); color: var(--text-dim); font-size: 12px;
   background: var(--bg-card); padding: 2px 8px; border-radius: 4px;
@@ -173,55 +184,37 @@ button.danger:hover { background: var(--red); color: var(--bg); }
 .mult-20 { background: rgba(255, 126, 63, 0.15); color: var(--orange); }
 .mult-25 { background: rgba(255, 107, 107, 0.2); color: var(--red); }
 
-/* EMERGENCY ALERT */
+/* EMERGENCY */
 .emergency-alert {
   background: rgba(255, 56, 96, 0.1); border: 1px solid var(--emergency);
   border-radius: 10px; padding: 16px 20px; margin-top: 20px;
   display: flex; align-items: center; gap: 12px;
 }
 .emergency-alert .icon { font-size: 24px; }
-.emergency-alert .text { flex: 1; }
 .emergency-alert .title { color: var(--emergency); font-weight: 700; font-size: 14px; }
 .emergency-alert .desc { color: var(--text-dim); font-size: 12px; margin-top: 2px; font-family: var(--mono); }
 
-/* POSITIONS TABLE */
-.positions {
-  background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
-  padding: 24px;
-}
-.positions-title {
-  font-size: 18px; font-weight: 600; margin-bottom: 16px;
-  display: flex; justify-content: space-between; align-items: center;
-}
-.positions-table { width: 100%; border-collapse: collapse; }
-.positions-table th {
+/* TABLES */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
   text-align: left; color: var(--text-dim); font-size: 11px;
   text-transform: uppercase; letter-spacing: 1px; padding: 10px 12px;
   border-bottom: 1px solid var(--border); font-family: var(--mono); font-weight: 500;
 }
-.positions-table td {
+.data-table td {
   padding: 14px 12px; font-family: var(--mono); font-size: 14px;
   border-bottom: 1px solid var(--border);
 }
-.positions-table tr:last-child td { border-bottom: none; }
-.positions-table .ticker-cell { font-weight: 700; }
+.data-table tr:last-child td { border-bottom: none; }
 .tag {
   display: inline-block; padding: 2px 8px; border-radius: 4px;
   font-size: 11px; font-weight: 600;
 }
 .tag-bull { background: rgba(86, 211, 100, 0.15); color: var(--green); }
 .tag-bear { background: rgba(255, 107, 107, 0.15); color: var(--red); }
+.tag-neutral { background: rgba(139, 148, 158, 0.15); color: var(--text-dim); }
 
 /* TRANSACTIONS */
-.transactions {
-  background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
-  padding: 24px;
-}
-.transactions-header {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 16px;
-}
-.transactions-title { font-size: 18px; font-weight: 600; }
 .add-tx-form {
   display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 12px;
   margin-bottom: 16px; padding: 16px; background: var(--bg); border-radius: 8px;
@@ -246,11 +239,161 @@ button.danger:hover { background: var(--red); color: var(--bg); }
 }
 .tx-delete:hover { color: var(--red); background: transparent; border: none; }
 
-/* HOW IT WORKS */
-.help {
-  background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
-  padding: 24px; font-size: 13px; line-height: 1.7;
+/* CHARTS */
+.chart-container {
+  background: var(--bg); border-radius: 8px; padding: 16px;
+  height: 360px; position: relative;
 }
+
+/* ASSET SELECTOR */
+.asset-selector {
+  display: flex; gap: 8px; margin-bottom: 20px;
+}
+.asset-btn {
+  background: var(--bg-card); border: 1px solid var(--border); color: var(--text-dim);
+  padding: 10px 20px; border-radius: 8px; cursor: pointer;
+  font-family: var(--mono); font-weight: 600; font-size: 13px; transition: all 0.15s;
+}
+.asset-btn:hover { border-color: var(--blue); color: var(--text); background: var(--bg-card); }
+.asset-btn.active { background: var(--blue); color: var(--bg); border-color: var(--blue); }
+
+/* DISTRIBUTION BARS */
+.distribution-bar {
+  display: flex; height: 32px; border-radius: 8px; overflow: hidden;
+  margin-bottom: 16px; border: 1px solid var(--border);
+}
+.dist-segment {
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 11px; font-weight: 600;
+  color: var(--bg); min-width: 40px;
+}
+.distribution-row {
+  display: grid; grid-template-columns: 80px 1fr 80px 80px 100px;
+  gap: 12px; padding: 10px 0; align-items: center;
+  font-family: var(--mono); font-size: 13px; border-bottom: 1px solid var(--border);
+}
+.distribution-row:last-child { border-bottom: none; }
+.distribution-row .ticker { font-weight: 700; }
+.distribution-bar-mini {
+  height: 8px; background: var(--bg); border-radius: 4px; position: relative; overflow: hidden;
+}
+.distribution-bar-mini-fill {
+  position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px;
+  transition: width 0.5s;
+}
+.distribution-target-line {
+  position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--text);
+}
+.dev-positive { color: var(--green); }
+.dev-negative { color: var(--red); }
+
+/* CALENDAR */
+.calendar-grid {
+  display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; margin-top: 16px;
+}
+.calendar-month {
+  aspect-ratio: 1; border-radius: 6px; display: flex; align-items: center;
+  justify-content: center; font-family: var(--mono); font-size: 10px;
+  font-weight: 700; color: var(--text-dim); border: 1px solid var(--border);
+}
+.calendar-month.bought {
+  background: rgba(86, 211, 100, 0.15); color: var(--green); border-color: var(--green);
+}
+.calendar-month.bought-mult {
+  background: rgba(255, 126, 63, 0.15); color: var(--orange); border-color: var(--orange);
+}
+.calendar-year-row {
+  display: flex; align-items: center; gap: 16px; margin-bottom: 12px;
+}
+.calendar-year-label {
+  font-family: var(--mono); font-weight: 700; color: var(--blue); width: 60px;
+}
+
+/* SCENARIOS */
+.scenario-card {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+  padding: 20px; margin-bottom: 12px;
+}
+.scenario-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+}
+.scenario-name { font-size: 16px; font-weight: 700; }
+.scenario-multiplier {
+  font-family: var(--mono); font-weight: 700; padding: 4px 12px; border-radius: 4px;
+}
+.scenario-conservative { color: var(--yellow); background: rgba(240, 198, 116, 0.15); }
+.scenario-moderate { color: var(--green); background: rgba(86, 211, 100, 0.15); }
+.scenario-optimistic { color: var(--blue); background: rgba(88, 166, 255, 0.15); }
+.scenario-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 12px; }
+.scenario-asset {
+  background: var(--bg-card); padding: 10px 12px; border-radius: 6px;
+  font-family: var(--mono); font-size: 12px;
+}
+.scenario-asset .ticker-name { color: var(--text-dim); margin-bottom: 4px; font-size: 10px; }
+.scenario-asset .price-target { font-weight: 700; color: var(--text); }
+.scenario-asset .multiplier { color: var(--green); font-size: 11px; margin-top: 2px; }
+
+/* JOURNAL */
+.journal-entry {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+  padding: 16px; margin-bottom: 12px;
+}
+.journal-header {
+  display: flex; justify-content: space-between; margin-bottom: 8px;
+  align-items: center;
+}
+.journal-date { font-family: var(--mono); font-weight: 700; color: var(--blue); }
+.journal-mood {
+  font-family: var(--mono); font-size: 11px; padding: 2px 8px; border-radius: 4px;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.mood-bullish { background: rgba(86, 211, 100, 0.15); color: var(--green); }
+.mood-bearish { background: rgba(255, 107, 107, 0.15); color: var(--red); }
+.mood-neutral { background: rgba(139, 148, 158, 0.15); color: var(--text-dim); }
+.journal-text { color: var(--text); font-size: 13px; line-height: 1.6; white-space: pre-wrap; }
+.add-journal-form {
+  background: var(--bg); border: 1px dashed var(--border); padding: 16px;
+  border-radius: 8px; margin-bottom: 16px;
+}
+.add-journal-form textarea {
+  width: 100%; background: var(--bg-card); border: 1px solid var(--border);
+  color: var(--text); padding: 12px; border-radius: 6px; font-family: var(--display);
+  font-size: 14px; min-height: 80px; resize: vertical; margin-bottom: 12px;
+}
+.add-journal-form textarea:focus { border-color: var(--blue); outline: none; }
+.journal-controls { display: flex; gap: 12px; align-items: center; }
+.journal-controls select, .journal-controls input {
+  background: var(--bg-card); border: 1px solid var(--border); color: var(--text);
+  padding: 8px 10px; border-radius: 6px; font-family: var(--mono); font-size: 13px;
+}
+
+/* SELL RULES */
+.sell-rule-card {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+  padding: 16px; margin-bottom: 12px;
+}
+.sell-rule-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+}
+.sell-rule-title { font-weight: 700; font-size: 14px; }
+.sell-rule-status {
+  font-family: var(--mono); font-size: 11px; padding: 2px 8px; border-radius: 4px;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.status-pending { background: rgba(139, 148, 158, 0.15); color: var(--text-dim); }
+.status-close { background: rgba(240, 198, 116, 0.15); color: var(--yellow); }
+.status-triggered { background: rgba(86, 211, 100, 0.15); color: var(--green); }
+.sell-progress {
+  height: 8px; background: var(--bg-card); border-radius: 4px; overflow: hidden;
+  margin: 8px 0; border: 1px solid var(--border);
+}
+.sell-progress-fill {
+  height: 100%; background: linear-gradient(90deg, var(--blue), var(--purple));
+  transition: width 0.5s;
+}
+
+/* HELP */
+.help { font-size: 13px; line-height: 1.7; }
 .help h3 {
   font-size: 14px; color: var(--blue); margin-bottom: 12px;
   text-transform: uppercase; letter-spacing: 1px; font-family: var(--mono);
@@ -264,19 +407,12 @@ button.danger:hover { background: var(--red); color: var(--bg); }
 }
 .rule-row:last-child { border: none; }
 
-/* LOADING */
-.loading {
-  display: inline-block; width: 12px; height: 12px;
-  border: 2px solid var(--border); border-top-color: var(--blue);
-  border-radius: 50%; animation: spin 0.8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
 @media (max-width: 900px) {
-  .summary-grid, .allocation-grid, .help-grid { grid-template-columns: 1fr 1fr; }
+  .summary-grid, .allocation-grid, .help-grid, .scenario-grid { grid-template-columns: 1fr 1fr; }
   .settings { grid-template-columns: 1fr 1fr; }
   .add-tx-form { grid-template-columns: 1fr 1fr; }
   .tx-row { grid-template-columns: 1fr 1fr; gap: 4px; }
+  .calendar-grid { grid-template-columns: repeat(6, 1fr); }
 }
 </style>
 </head>
@@ -288,7 +424,7 @@ button.danger:hover { background: var(--red); color: var(--bg); }
 <div class="header">
   <div>
     <h1>Crypto DCA · C Moderado</h1>
-    <div class="subtitle">BTC 55% · ETH 25% · SOL 10% · BNB 10% — buy-only system</div>
+    <div class="subtitle">BTC 55% · ETH 25% · SOL 10% · BNB 10% — sistema cíclico de acumulación</div>
   </div>
   <div class="header-actions">
     <button onclick="refreshPrices()">↻ Actualizar precios</button>
@@ -318,83 +454,311 @@ button.danger:hover { background: var(--red); color: var(--bg); }
   </div>
 </div>
 
-<!-- MAIN -->
-<div class="main-grid">
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('main')">📊 Resumen</button>
+  <button class="tab" onclick="switchTab('asset')">📈 Por activo</button>
+  <button class="tab" onclick="switchTab('portfolio')">💼 Evolución portfolio</button>
+  <button class="tab" onclick="switchTab('distribution')">⚖️ Distribución</button>
+  <button class="tab" onclick="switchTab('calendar')">📅 Calendario</button>
+  <button class="tab" onclick="switchTab('scenarios')">🎯 Escenarios</button>
+  <button class="tab" onclick="switchTab('stats')">📐 Estadísticas</button>
+  <button class="tab" onclick="switchTab('journal')">📔 Journal</button>
+  <button class="tab" onclick="switchTab('sell')">💰 Reglas venta</button>
+  <button class="tab" onclick="switchTab('transactions')">📝 Transacciones</button>
+</div>
 
-  <!-- PORTFOLIO SUMMARY -->
-  <div class="summary">
-    <div class="summary-title">📊 Resumen del portfolio</div>
-    <div class="summary-grid">
+<!-- TAB: RESUMEN -->
+<div id="tab-main" class="tab-content active">
+  <div class="main-grid">
+    <div class="card">
+      <div class="card-subtitle">📊 Resumen del portfolio</div>
+      <div class="summary-grid">
+        <div class="summary-stat">
+          <div class="label">Total invertido</div>
+          <div class="value" id="totalInvested">$0</div>
+        </div>
+        <div class="summary-stat">
+          <div class="label">Valor actual</div>
+          <div class="value" id="totalValue">$0</div>
+        </div>
+        <div class="summary-stat">
+          <div class="label">Ganancia/Pérdida</div>
+          <div class="value" id="totalPnL">$0</div>
+          <div class="sub" id="totalPnLPct">0.00%</div>
+        </div>
+        <div class="summary-stat">
+          <div class="label">Compras totales</div>
+          <div class="value" id="totalBuys">0</div>
+        </div>
+        <div class="summary-stat">
+          <div class="label">Próxima compra (mes)</div>
+          <div class="value" id="nextMonthTotal" style="color: var(--blue)">$0</div>
+          <div class="sub" id="multiplierUsed">multiplicador 1.00x</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="allocation">
+      <div class="allocation-header">
+        <div class="allocation-title">
+          <span class="allocation-title-icon"></span>
+          Compra de este mes
+        </div>
+        <div style="font-family: var(--mono); color: var(--text-dim); font-size: 13px;" id="currentMonth">—</div>
+      </div>
+      <div class="allocation-grid" id="allocationCards"></div>
+      <div id="emergencyAlertContainer"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span>💼 Mis posiciones</span>
+        <span style="font-family:var(--mono); font-size:12px; color:var(--text-dim);">precio en vivo Binance</span>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Asset</th><th>Holdings</th><th>Cost basis</th><th>Precio actual</th>
+            <th>Inversión</th><th>Valor actual</th><th>P/L</th><th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="positionsBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: POR ACTIVO -->
+<div id="tab-asset" class="tab-content">
+  <div class="card">
+    <div class="card-title">📈 Historial por activo</div>
+    <div class="asset-selector" id="assetSelector"></div>
+    
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
       <div class="summary-stat">
-        <div class="label">Total invertido</div>
-        <div class="value" id="totalInvested">$0</div>
+        <div class="label">Holdings</div>
+        <div class="value" id="assetHoldings" style="font-size: 18px;">—</div>
+      </div>
+      <div class="summary-stat">
+        <div class="label">Cost basis</div>
+        <div class="value" id="assetCostBasis" style="font-size: 18px;">—</div>
       </div>
       <div class="summary-stat">
         <div class="label">Valor actual</div>
-        <div class="value" id="totalValue">$0</div>
+        <div class="value" id="assetValue" style="font-size: 18px;">—</div>
       </div>
       <div class="summary-stat">
-        <div class="label">Ganancia/Pérdida</div>
-        <div class="value" id="totalPnL">$0</div>
-        <div class="sub" id="totalPnLPct">0.00%</div>
-      </div>
-      <div class="summary-stat">
-        <div class="label">Compras totales</div>
-        <div class="value" id="totalBuys">0</div>
-      </div>
-      <div class="summary-stat">
-        <div class="label">Próxima compra (mes)</div>
-        <div class="value" id="nextMonthTotal" style="color: var(--blue)">$0</div>
-        <div class="sub" id="multiplierUsed">multiplicador 1.00x</div>
+        <div class="label">P/L</div>
+        <div class="value" id="assetPnL" style="font-size: 18px;">—</div>
+        <div class="sub" id="assetPnLPct">—</div>
       </div>
     </div>
-  </div>
-
-  <!-- ALLOCATION FOR THIS MONTH -->
-  <div class="allocation">
-    <div class="allocation-header">
-      <div class="allocation-title">
-        <span class="allocation-title-icon"></span>
-        Compra de este mes
-      </div>
-      <div style="font-family: var(--mono); color: var(--text-dim); font-size: 13px;" id="currentMonth">—</div>
+    
+    <div class="chart-container">
+      <canvas id="assetChart"></canvas>
     </div>
-    <div class="allocation-grid" id="allocationCards">
-      <!-- Cards generados por JS -->
-    </div>
-    <div id="emergencyAlertContainer"></div>
-  </div>
-
-  <!-- POSITIONS TABLE -->
-  <div class="positions">
-    <div class="positions-title">
-      <span>💼 Mis posiciones</span>
-      <span style="font-family:var(--mono); font-size:12px; color:var(--text-dim);">precio en vivo Binance</span>
-    </div>
-    <table class="positions-table">
+    
+    <h3 style="margin-top: 24px; font-size: 14px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; font-family: var(--mono);">Historial de compras</h3>
+    <table class="data-table" style="margin-top: 12px;">
       <thead>
         <tr>
-          <th>Asset</th>
-          <th>Holdings</th>
-          <th>Cost basis</th>
-          <th>Precio actual</th>
-          <th>Inversión</th>
-          <th>Valor actual</th>
-          <th>P/L</th>
-          <th>Estado</th>
+          <th>Fecha</th><th>USD</th><th>Precio</th><th>Cantidad</th><th>P/L vs. precio actual</th>
         </tr>
       </thead>
-      <tbody id="positionsBody"></tbody>
+      <tbody id="assetTxBody"></tbody>
     </table>
   </div>
+</div>
 
-  <!-- TRANSACTIONS -->
-  <div class="transactions">
-    <div class="transactions-header">
-      <div class="transactions-title">📝 Registrar nueva compra</div>
-      <div style="font-family: var(--mono); font-size: 12px; color: var(--text-dim);">
-        Cargá tus compras reales acá
+<!-- TAB: EVOLUCIÓN PORTFOLIO -->
+<div id="tab-portfolio" class="tab-content">
+  <div class="card">
+    <div class="card-title">💼 Evolución del portfolio</div>
+    <div class="card-subtitle">Invertido acumulado vs Valor del portfolio en el tiempo</div>
+    <div class="chart-container" style="height: 400px;">
+      <canvas id="portfolioChart"></canvas>
+    </div>
+    
+    <div style="margin-top: 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+      <div class="summary-stat">
+        <div class="label">Mejor mes</div>
+        <div class="value" id="bestMonth" style="font-size: 18px;">—</div>
       </div>
+      <div class="summary-stat">
+        <div class="label">Peor mes</div>
+        <div class="value" id="worstMonth" style="font-size: 18px;">—</div>
+      </div>
+      <div class="summary-stat">
+        <div class="label">Compras consecutivas</div>
+        <div class="value" id="streakMonths" style="font-size: 18px;">0</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: DISTRIBUCIÓN -->
+<div id="tab-distribution" class="tab-content">
+  <div class="card">
+    <div class="card-title">⚖️ Distribución actual vs target</div>
+    <div class="card-subtitle">Si tu distribución se desvió mucho, considerá rebalancear</div>
+    
+    <div style="margin-bottom: 32px;">
+      <div style="margin-bottom: 12px; font-family: var(--mono); font-size: 12px; color: var(--text-dim);">DISTRIBUCIÓN ACTUAL (por valor de mercado)</div>
+      <div class="distribution-bar" id="actualDistBar"></div>
+      <div style="margin-bottom: 12px; font-family: var(--mono); font-size: 12px; color: var(--text-dim);">TARGET (55/25/10/10)</div>
+      <div class="distribution-bar" id="targetDistBar"></div>
+    </div>
+    
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Asset</th><th>Target</th><th>Actual</th><th>Desviación</th><th>Sugerencia</th>
+        </tr>
+      </thead>
+      <tbody id="distributionBody"></tbody>
+    </table>
+    
+    <div style="margin-top: 24px; padding: 16px; background: var(--bg); border-radius: 8px; font-family: var(--mono); font-size: 12px; color: var(--text-dim); line-height: 1.7;">
+      💡 <strong style="color: var(--text);">Cómo leer:</strong> el sistema NO rebalancea automáticamente. Si un asset se desvía mucho de su target (ej: SOL pasa de 10% a 25%), podés ajustar tus compras del próximo mes para volver al equilibrio. O simplemente dejarlo correr — ambas estrategias son válidas.
+    </div>
+  </div>
+</div>
+
+<!-- TAB: CALENDARIO -->
+<div id="tab-calendar" class="tab-content">
+  <div class="card">
+    <div class="card-title">📅 Calendario de compras</div>
+    <div class="card-subtitle">Verde = mes con compra · Naranja = compra con multiplicador · Vacío = mes sin compra</div>
+    <div id="calendarYears"></div>
+    
+    <div style="margin-top: 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+      <div class="summary-stat">
+        <div class="label">Meses con compra</div>
+        <div class="value" id="monthsBought" style="font-size: 20px;">0</div>
+      </div>
+      <div class="summary-stat">
+        <div class="label">Meses con multiplicador</div>
+        <div class="value" id="monthsMult" style="font-size: 20px;">0</div>
+      </div>
+      <div class="summary-stat">
+        <div class="label">Streak actual</div>
+        <div class="value" id="currentStreak" style="font-size: 20px;">0</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: ESCENARIOS -->
+<div id="tab-scenarios" class="tab-content">
+  <div class="card">
+    <div class="card-title">🎯 Proyecciones / Escenarios</div>
+    <div class="card-subtitle">Si vendieras todo a estos precios objetivo, qué tendrías</div>
+    
+    <div id="scenariosContainer"></div>
+    
+    <div style="margin-top: 24px; padding: 16px; background: var(--bg); border-radius: 8px; font-family: var(--mono); font-size: 12px; color: var(--text-dim); line-height: 1.7;">
+      ⚠️ <strong style="color: var(--text);">Importante:</strong> los precios objetivo son estimaciones basadas en patrones de ciclos pasados. NO son predicciones. El próximo ciclo puede no parecerse al anterior. Use estos números como guía, no como verdad absoluta.
+    </div>
+  </div>
+</div>
+
+<!-- TAB: ESTADÍSTICAS -->
+<div id="tab-stats" class="tab-content">
+  <div class="card">
+    <div class="card-title">📐 Estadísticas avanzadas</div>
+    
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 24px;">
+      <div class="summary-stat">
+        <div class="label">Precio promedio compra (BTC)</div>
+        <div class="value" id="avgBtcPrice" style="font-size: 18px;">—</div>
+      </div>
+      <div class="summary-stat">
+        <div class="label">Precio promedio compra (ETH)</div>
+        <div class="value" id="avgEthPrice" style="font-size: 18px;">—</div>
+      </div>
+      <div class="summary-stat">
+        <div class="label">Precio promedio compra (SOL)</div>
+        <div class="value" id="avgSolPrice" style="font-size: 18px;">—</div>
+      </div>
+      <div class="summary-stat">
+        <div class="label">Precio promedio compra (BNB)</div>
+        <div class="value" id="avgBnbPrice" style="font-size: 18px;">—</div>
+      </div>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
+      <div class="summary-stat">
+        <div class="label">IRR estimado anualizado</div>
+        <div class="value" id="irrEstimate" style="font-size: 18px;">—</div>
+        <div class="sub">Internal Rate of Return</div>
+      </div>
+      <div class="summary-stat">
+        <div class="label">Días desde primera compra</div>
+        <div class="value" id="daysInvesting" style="font-size: 18px;">0</div>
+      </div>
+      <div class="summary-stat">
+        <div class="label">Inversión promedio mensual</div>
+        <div class="value" id="avgMonthlyInvestment" style="font-size: 18px;">$0</div>
+      </div>
+    </div>
+    
+    <h3 style="margin-top: 16px; font-size: 14px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; font-family: var(--mono);">Comparación: tu sistema vs HODL puro (1x base)</h3>
+    <table class="data-table" style="margin-top: 12px;">
+      <thead>
+        <tr>
+          <th>Estrategia</th><th>Invertido total</th><th>Valor estimado</th><th>P/L</th><th>Ratio</th>
+        </tr>
+      </thead>
+      <tbody id="comparisonBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- TAB: JOURNAL -->
+<div id="tab-journal" class="tab-content">
+  <div class="card">
+    <div class="card-title">📔 Journal mensual</div>
+    <div class="card-subtitle">Anotá tu visión del mercado, tus decisiones, sentimientos. Mirá hacia atrás para no repetir errores.</div>
+    
+    <div class="add-journal-form">
+      <textarea id="journalText" placeholder="Qué pensaba este mes... cómo veía el mercado... qué decidí y por qué..."></textarea>
+      <div class="journal-controls">
+        <input type="date" id="journalDate">
+        <select id="journalMood">
+          <option value="bullish">Bullish</option>
+          <option value="neutral" selected>Neutral</option>
+          <option value="bearish">Bearish</option>
+        </select>
+        <button class="primary" onclick="addJournalEntry()">+ Guardar entrada</button>
+      </div>
+    </div>
+    
+    <div id="journalEntries"></div>
+  </div>
+</div>
+
+<!-- TAB: REGLAS DE VENTA -->
+<div id="tab-sell" class="tab-content">
+  <div class="card">
+    <div class="card-title">💰 Reglas de venta del próximo bull</div>
+    <div class="card-subtitle">Estas reglas se activarán cuando llegue el bull market (~2027-2028). Por ahora son un tracker visual.</div>
+    
+    <div style="padding: 16px; background: rgba(255, 126, 63, 0.1); border: 1px solid var(--orange); border-radius: 8px; margin-bottom: 20px; font-family: var(--mono); font-size: 12px; color: var(--text-dim); line-height: 1.7;">
+      ⚠️ <strong style="color: var(--orange);">FASE ACTUAL: ACUMULACIÓN</strong><br>
+      No vender nada todavía. Estamos en bear/lateral, fase de comprar disciplinadamente. Las reglas de venta se activarán cuando el mercado esté claramente en bull. Este panel te muestra el progreso hacia esos triggers para que vayas viendo cuán cerca estamos.
+    </div>
+    
+    <div id="sellRulesContainer"></div>
+  </div>
+</div>
+
+<!-- TAB: TRANSACCIONES -->
+<div id="tab-transactions" class="tab-content">
+  <div class="card">
+    <div class="card-title">
+      <span>📝 Registrar nueva compra</span>
+      <span style="font-family: var(--mono); font-size: 12px; color: var(--text-dim);">Cargá tus compras reales acá</span>
     </div>
     
     <div class="add-tx-form">
@@ -417,31 +781,32 @@ button.danger:hover { background: var(--red); color: var(--bg); }
       <div class="tx-list" id="txList"></div>
     </div>
   </div>
-
-  <!-- HOW IT WORKS -->
-  <div class="help">
-    <h3>📖 Cómo funciona el sistema</h3>
-    <div class="help-grid">
-      <div class="help-section">
-        <strong>Reglas de compra (C Moderado)</strong><br>
-        El multiplicador se calcula sobre tu cost basis (precio promedio de compra) por cada asset:
-        <div style="margin-top: 12px;">
-          <div class="rule-row"><span>Sin pérdida o en ganancia</span><strong>1.00x base</strong></div>
-          <div class="rule-row"><span>Pérdida -10% a -25%</span><strong>1.50x base</strong></div>
-          <div class="rule-row"><span>Pérdida -25% a -40%</span><strong>2.00x base</strong></div>
-          <div class="rule-row"><span>Pérdida más de -40%</span><strong>2.50x base</strong></div>
+  
+  <div class="card" style="margin-top: 24px;">
+    <div class="card-title">📖 Cómo funciona el sistema</div>
+    <div class="help">
+      <div class="help-grid">
+        <div class="help-section">
+          <strong>Reglas de compra (C Moderado)</strong><br>
+          El multiplicador se calcula sobre tu cost basis (precio promedio de compra) por cada asset:
+          <div style="margin-top: 12px;">
+            <div class="rule-row"><span>Sin pérdida o en ganancia</span><strong>1.00x base</strong></div>
+            <div class="rule-row"><span>Pérdida -10% a -25%</span><strong>1.50x base</strong></div>
+            <div class="rule-row"><span>Pérdida -25% a -40%</span><strong>2.00x base</strong></div>
+            <div class="rule-row"><span>Pérdida más de -40%</span><strong>2.50x base</strong></div>
+          </div>
         </div>
-      </div>
-      <div class="help-section">
-        <strong>Capital de emergencia</strong><br>
-        Si UN asset cae más de 50% (configurable) desde su peak en los últimos 30 días, se activa la alerta de emergencia. Ahí podés invertir el capital de emergencia adicional al multiplicador 2.5x.<br><br>
-        <strong>Distribución de la compra mensual:</strong> el sistema calcula automáticamente cuánto va a cada asset según el % asignado y el multiplicador específico de ese asset.<br><br>
-        <strong>Historial:</strong> exportá JSON regularmente como backup. Si formateás la PC, importás el JSON y todo vuelve.
+        <div class="help-section">
+          <strong>Capital de emergencia</strong><br>
+          Si UN asset cae más de 50% desde su peak en 30d, se activa la alerta. Vos decidís si meter capital extra.<br><br>
+          <strong>Reglas de venta:</strong> verás el progreso en la pestaña "Reglas venta". Se activarán cuando sea bull confirmado.<br><br>
+          <strong>Backup:</strong> exportá JSON regularmente. Si formateás la PC, importás y todo vuelve.
+        </div>
       </div>
     </div>
   </div>
-
 </div>
+
 </div>
 
 <script>
@@ -455,10 +820,22 @@ const ASSETS = [
   { ticker: 'BNB', symbol: 'BNBUSDT', alloc: 0.10, color: '#f3ba2f' },
 ];
 
+const PREV_CYCLE_ATH = {
+  BTC: 109000,  // Peak ciclo 2024
+  ETH: 4800,
+  SOL: 290,
+  BNB: 790,
+};
+
 let prices = { BTC: 0, ETH: 0, SOL: 0, BNB: 0 };
 let priceHistory30d = { BTC: [], ETH: [], SOL: [], BNB: [] };
+let priceHistoryYearly = { BTC: [], ETH: [], SOL: [], BNB: [] };  // Para gráficos largos
 let transactions = [];
+let journalEntries = [];
 let settings = { baseMonthly: 300, emergencyCapital: 1000, emergencyTrigger: 50 };
+let selectedAsset = 'BTC';
+let assetChartInstance = null;
+let portfolioChartInstance = null;
 
 // ============================================
 // LOAD/SAVE STATE
@@ -467,15 +844,16 @@ function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem('cryptoDCA') || '{}');
     transactions = saved.transactions || [];
+    journalEntries = saved.journalEntries || [];
     settings = { ...settings, ...(saved.settings || {}) };
     document.getElementById('baseMonthly').value = settings.baseMonthly;
     document.getElementById('emergencyCapital').value = settings.emergencyCapital;
     document.getElementById('emergencyTrigger').value = settings.emergencyTrigger;
-  } catch (e) { console.error('Error loading state:', e); }
+  } catch (e) { console.error('Error loading:', e); }
 }
 
 function saveState() {
-  localStorage.setItem('cryptoDCA', JSON.stringify({ transactions, settings }));
+  localStorage.setItem('cryptoDCA', JSON.stringify({ transactions, journalEntries, settings }));
 }
 
 function saveSettings() {
@@ -487,12 +865,11 @@ function saveSettings() {
 }
 
 // ============================================
-// FETCH PRICES FROM BINANCE
+// FETCH PRICES
 // ============================================
 async function refreshPrices() {
   document.getElementById('lastUpdate').value = 'cargando...';
   try {
-    // Precios actuales
     const symbols = ASSETS.map(a => `"${a.symbol}"`).join(',');
     const url = `https://api.binance.com/api/v3/ticker/price?symbols=[${symbols}]`;
     const res = await fetch(url);
@@ -503,19 +880,28 @@ async function refreshPrices() {
       if (asset) prices[asset.ticker] = parseFloat(item.price);
     });
     
-    // Histórico 30d para detectar emergencia
+    // Histórico 30d
     for (const asset of ASSETS) {
       try {
         const histUrl = `https://api.binance.com/api/v3/klines?symbol=${asset.symbol}&interval=1d&limit=30`;
         const histRes = await fetch(histUrl);
         const histData = await histRes.json();
         priceHistory30d[asset.ticker] = histData.map(k => ({
-          time: k[0],
-          high: parseFloat(k[2]),
-          low: parseFloat(k[3]),
-          close: parseFloat(k[4]),
+          time: k[0], high: parseFloat(k[2]), low: parseFloat(k[3]), close: parseFloat(k[4]),
         }));
       } catch (e) { console.error(`Error histórico ${asset.ticker}:`, e); }
+    }
+    
+    // Histórico ~3 años (mensual)
+    for (const asset of ASSETS) {
+      try {
+        const histUrl = `https://api.binance.com/api/v3/klines?symbol=${asset.symbol}&interval=1M&limit=60`;
+        const histRes = await fetch(histUrl);
+        const histData = await histRes.json();
+        priceHistoryYearly[asset.ticker] = histData.map(k => ({
+          time: k[0], close: parseFloat(k[4]),
+        }));
+      } catch (e) { console.error(`Error histórico mensual ${asset.ticker}:`, e); }
     }
     
     document.getElementById('lastUpdate').value = new Date().toLocaleString('es-AR', { 
@@ -541,10 +927,8 @@ function getPosition(ticker) {
   const currentValue = totalQty * currentPrice;
   const pnl = currentValue - totalInvested;
   const pnlPct = totalInvested > 0 ? (pnl / totalInvested) * 100 : 0;
-  // dd vs cost basis (positivo = en pérdida)
   const ddVsCost = costBasis > 0 ? (costBasis - currentPrice) / costBasis : 0;
-  
-  return { ticker, totalQty, totalInvested, costBasis, currentPrice, currentValue, pnl, pnlPct, ddVsCost };
+  return { ticker, totalQty, totalInvested, costBasis, currentPrice, currentValue, pnl, pnlPct, ddVsCost, txs };
 }
 
 function getMultiplier(ddVsCost) {
@@ -566,12 +950,25 @@ function isEmergency(ticker) {
 }
 
 // ============================================
-// RENDER
+// TABS
+// ============================================
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.tab[onclick="switchTab('${name}')"]`).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  
+  // Render charts when tab becomes visible
+  if (name === 'asset') renderAssetTab();
+  if (name === 'portfolio') renderPortfolioTab();
+}
+
+// ============================================
+// RENDER MAIN
 // ============================================
 function render() {
   const positions = ASSETS.map(a => getPosition(a.ticker));
   
-  // Summary
   const totalInvested = positions.reduce((s, p) => s + p.totalInvested, 0);
   const totalValue = positions.reduce((s, p) => s + p.currentValue, 0);
   const totalPnL = totalValue - totalInvested;
@@ -585,13 +982,11 @@ function render() {
   document.getElementById('totalPnLPct').className = 'sub ' + (totalPnLPct >= 0 ? 'profit-positive' : 'profit-negative');
   document.getElementById('totalBuys').textContent = transactions.length;
   
-  // Allocation cards (ESTE MES)
   const monthName = new Date().toLocaleString('es-AR', { month: 'long', year: 'numeric' });
   document.getElementById('currentMonth').textContent = monthName;
   
   let totalThisMonth = 0;
   let weightedMult = 0;
-  let totalAlloc = 0;
   
   const cards = ASSETS.map(asset => {
     const pos = positions.find(p => p.ticker === asset.ticker);
@@ -600,13 +995,11 @@ function render() {
     const amountToBuy = baseForAsset * mult;
     totalThisMonth += amountToBuy;
     weightedMult += mult * asset.alloc;
-    totalAlloc += asset.alloc;
     
     const multClass = mult === 1.0 ? 'mult-1' : mult === 1.5 ? 'mult-15' : mult === 2.0 ? 'mult-20' : 'mult-25';
     const ddText = pos.ddVsCost > 0 ? `Pérdida vs cost basis: -${(pos.ddVsCost * 100).toFixed(1)}%` :
                    pos.costBasis > 0 ? `Sin pérdida (${pos.pnlPct >= 0 ? '+' : ''}${pos.pnlPct.toFixed(1)}%)` :
                    `Sin holdings previos`;
-    
     const qtyEstimate = pos.currentPrice > 0 ? amountToBuy / pos.currentPrice : 0;
     
     return `
@@ -622,41 +1015,36 @@ function render() {
           ${ddText}
         </div>
         <div class="alloc-mult ${multClass}">multiplicador ${mult.toFixed(2)}x</div>
-      </div>
-    `;
+      </div>`;
   }).join('');
   
   document.getElementById('allocationCards').innerHTML = cards;
   document.getElementById('nextMonthTotal').textContent = `$${totalThisMonth.toFixed(2)}`;
   document.getElementById('multiplierUsed').textContent = `multiplicador promedio ${weightedMult.toFixed(2)}x`;
   
-  // Emergency alerts
+  // Emergency
   const emergencyAssets = ASSETS.filter(a => isEmergency(a.ticker));
   let emergencyHTML = '';
   if (emergencyAssets.length > 0) {
     emergencyHTML = `
       <div class="emergency-alert">
         <div class="icon">🚨</div>
-        <div class="text">
+        <div>
           <div class="title">EMERGENCIA - Caída ≥${settings.emergencyTrigger}% en 30d</div>
-          <div class="desc">
-            ${emergencyAssets.map(a => a.ticker).join(', ')} cayeron significativamente.
-            Considerá usar el capital de emergencia ($${settings.emergencyCapital.toFixed(2)}) para comprar extra.
-          </div>
+          <div class="desc">${emergencyAssets.map(a => a.ticker).join(', ')} cayeron significativamente. Considerá usar capital de emergencia ($${settings.emergencyCapital.toFixed(2)}).</div>
         </div>
-      </div>
-    `;
+      </div>`;
   }
   document.getElementById('emergencyAlertContainer').innerHTML = emergencyHTML;
   
   // Positions table
   const positionsHTML = positions.map(p => {
-    const status = p.totalInvested === 0 ? '<span class="tag" style="background:rgba(139,148,158,0.15);color:var(--text-dim)">sin posición</span>' :
+    const status = p.totalInvested === 0 ? '<span class="tag tag-neutral">sin posición</span>' :
                    p.pnlPct >= 0 ? '<span class="tag tag-bull">↑ ganando</span>' :
                    '<span class="tag tag-bear">↓ perdiendo</span>';
     return `
       <tr>
-        <td class="ticker-cell" style="color:${ASSETS.find(a => a.ticker === p.ticker).color}">${p.ticker}</td>
+        <td style="color:${ASSETS.find(a => a.ticker === p.ticker).color}; font-weight:700;">${p.ticker}</td>
         <td>${p.totalQty.toFixed(8)}</td>
         <td>${p.costBasis > 0 ? '$' + p.costBasis.toFixed(2) : '—'}</td>
         <td>$${p.currentPrice.toFixed(2)}</td>
@@ -667,14 +1055,13 @@ function render() {
           <small>(${p.pnlPct >= 0 ? '+' : ''}${p.pnlPct.toFixed(2)}%)</small>
         </td>
         <td>${status}</td>
-      </tr>
-    `;
+      </tr>`;
   }).join('');
   document.getElementById('positionsBody').innerHTML = positionsHTML;
   
-  // Transactions list
+  // Transactions
   const txSorted = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
-  const txHTML = txSorted.map((t, idx) => {
+  const txHTML = txSorted.map(t => {
     const realIdx = transactions.indexOf(t);
     return `
       <div class="tx-row">
@@ -684,11 +1071,680 @@ function render() {
         <div>@ $${t.price.toFixed(2)}</div>
         <div>${(t.amount / t.price).toFixed(8)}</div>
         <button class="tx-delete" onclick="deleteTransaction(${realIdx})" title="Borrar">✕</button>
-      </div>
-    `;
+      </div>`;
   }).join('');
   document.getElementById('txList').innerHTML = txHTML || '<div style="text-align:center;padding:24px;color:var(--text-dim);">Sin compras registradas todavía</div>';
   document.getElementById('txCount').textContent = transactions.length;
+  
+  // Render other tabs
+  renderDistribution(positions, totalValue);
+  renderCalendar();
+  renderScenarios(positions);
+  renderStats(positions, totalInvested, totalValue);
+  renderJournal();
+  renderSellRules(positions);
+  renderAssetSelector();
+}
+
+// ============================================
+// ASSET TAB
+// ============================================
+function renderAssetSelector() {
+  const html = ASSETS.map(a => 
+    `<button class="asset-btn ${selectedAsset === a.ticker ? 'active' : ''}" onclick="selectAsset('${a.ticker}')" style="${selectedAsset === a.ticker ? '' : 'border-left: 3px solid ' + a.color}">${a.ticker}</button>`
+  ).join('');
+  document.getElementById('assetSelector').innerHTML = html;
+}
+
+function selectAsset(ticker) {
+  selectedAsset = ticker;
+  renderAssetSelector();
+  renderAssetTab();
+}
+
+function renderAssetTab() {
+  const pos = getPosition(selectedAsset);
+  
+  document.getElementById('assetHoldings').textContent = pos.totalQty > 0 ? `${pos.totalQty.toFixed(6)} ${selectedAsset}` : '—';
+  document.getElementById('assetCostBasis').textContent = pos.costBasis > 0 ? `$${pos.costBasis.toFixed(2)}` : '—';
+  document.getElementById('assetValue').textContent = `$${pos.currentValue.toFixed(2)}`;
+  
+  const pnlEl = document.getElementById('assetPnL');
+  pnlEl.textContent = `${pos.pnl >= 0 ? '+' : ''}$${pos.pnl.toFixed(2)}`;
+  pnlEl.className = 'value ' + (pos.pnl >= 0 ? 'profit-positive' : 'profit-negative');
+  
+  const pnlPctEl = document.getElementById('assetPnLPct');
+  pnlPctEl.textContent = `${pos.pnlPct >= 0 ? '+' : ''}${pos.pnlPct.toFixed(2)}%`;
+  pnlPctEl.className = 'sub ' + (pos.pnl >= 0 ? 'profit-positive' : 'profit-negative');
+  
+  // Tabla de compras
+  const txSorted = [...pos.txs].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const txHTML = txSorted.map(t => {
+    const qty = t.amount / t.price;
+    const currentValue = qty * pos.currentPrice;
+    const pl = currentValue - t.amount;
+    const plPct = (pl / t.amount) * 100;
+    return `
+      <tr>
+        <td>${t.date}</td>
+        <td>$${t.amount.toFixed(2)}</td>
+        <td>$${t.price.toFixed(2)}</td>
+        <td>${qty.toFixed(8)}</td>
+        <td class="${pl >= 0 ? 'profit-positive' : 'profit-negative'}">
+          ${pl >= 0 ? '+' : ''}$${pl.toFixed(2)} (${plPct >= 0 ? '+' : ''}${plPct.toFixed(1)}%)
+        </td>
+      </tr>`;
+  }).join('');
+  document.getElementById('assetTxBody').innerHTML = txHTML || '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-dim);">Sin compras de ' + selectedAsset + '</td></tr>';
+  
+  // Chart
+  drawAssetChart(pos);
+}
+
+function drawAssetChart(pos) {
+  const ctx = document.getElementById('assetChart');
+  if (!ctx) return;
+  
+  if (assetChartInstance) assetChartInstance.destroy();
+  
+  // Construir serie de evolución basada en compras
+  const sortedTxs = [...pos.txs].sort((a, b) => new Date(a.date) - new Date(b.date));
+  
+  if (sortedTxs.length === 0) {
+    ctx.style.display = 'none';
+    return;
+  }
+  ctx.style.display = 'block';
+  
+  // Para cada compra, calcular invertido acumulado y holdings acumulados
+  let cumQty = 0;
+  let cumInvested = 0;
+  const points = sortedTxs.map(tx => {
+    cumQty += tx.amount / tx.price;
+    cumInvested += tx.amount;
+    return {
+      date: tx.date,
+      invested: cumInvested,
+      qty: cumQty,
+      valueAtPrice: cumQty * tx.price, // valor al precio de la compra
+    };
+  });
+  
+  // Agregar punto actual
+  points.push({
+    date: new Date().toISOString().split('T')[0],
+    invested: cumInvested,
+    qty: cumQty,
+    valueAtPrice: cumQty * pos.currentPrice,
+  });
+  
+  const asset = ASSETS.find(a => a.ticker === selectedAsset);
+  
+  assetChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: points.map(p => p.date),
+      datasets: [{
+        label: 'Invertido acumulado',
+        data: points.map(p => p.invested),
+        borderColor: '#8b949e',
+        backgroundColor: 'rgba(139, 148, 158, 0.05)',
+        borderWidth: 2,
+        fill: false,
+        borderDash: [5, 5],
+        tension: 0.1,
+      }, {
+        label: 'Valor de la posición',
+        data: points.map(p => p.valueAtPrice),
+        borderColor: asset.color,
+        backgroundColor: asset.color + '20',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.3,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#e6edf3', font: { family: 'JetBrains Mono', size: 11 } } },
+        tooltip: { callbacks: { label: (c) => `${c.dataset.label}: $${c.parsed.y.toFixed(2)}` } }
+      },
+      scales: {
+        x: { ticks: { color: '#8b949e', font: { family: 'JetBrains Mono', size: 10 } }, grid: { color: '#1f2630' } },
+        y: { ticks: { color: '#8b949e', font: { family: 'JetBrains Mono', size: 10 }, callback: (v) => '$' + v.toFixed(0) }, grid: { color: '#1f2630' } }
+      }
+    }
+  });
+}
+
+// ============================================
+// PORTFOLIO TAB
+// ============================================
+function renderPortfolioTab() {
+  if (transactions.length === 0) {
+    document.getElementById('bestMonth').textContent = '—';
+    document.getElementById('worstMonth').textContent = '—';
+    document.getElementById('streakMonths').textContent = '0';
+    return;
+  }
+  
+  // Construir serie temporal mensual
+  const monthlyData = buildMonthlyTimeSeries();
+  
+  // Encontrar mejor y peor mes
+  let bestMonth = null, worstMonth = null;
+  let bestPnL = -Infinity, worstPnL = Infinity;
+  for (let i = 1; i < monthlyData.length; i++) {
+    const monthPnL = monthlyData[i].value - monthlyData[i-1].value - (monthlyData[i].invested - monthlyData[i-1].invested);
+    if (monthPnL > bestPnL) { bestPnL = monthPnL; bestMonth = monthlyData[i]; }
+    if (monthPnL < worstPnL) { worstPnL = monthPnL; worstMonth = monthlyData[i]; }
+  }
+  
+  document.getElementById('bestMonth').textContent = bestMonth ? `${bestMonth.label} (+$${bestPnL.toFixed(0)})` : '—';
+  document.getElementById('worstMonth').textContent = worstMonth ? `${worstMonth.label} ($${worstPnL.toFixed(0)})` : '—';
+  
+  // Streak
+  const months = getMonthsBought();
+  document.getElementById('streakMonths').textContent = calculateStreak(months);
+  
+  drawPortfolioChart(monthlyData);
+}
+
+function buildMonthlyTimeSeries() {
+  if (transactions.length === 0) return [];
+  
+  const sorted = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
+  const startDate = new Date(sorted[0].date);
+  const endDate = new Date();
+  
+  const data = [];
+  let current = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+  
+  while (current <= endDate) {
+    const monthEnd = new Date(current.getFullYear(), current.getMonth() + 1, 0);
+    
+    // Compras hasta este mes
+    let qtyByAsset = { BTC: 0, ETH: 0, SOL: 0, BNB: 0 };
+    let totalInvested = 0;
+    
+    sorted.forEach(tx => {
+      const txDate = new Date(tx.date);
+      if (txDate <= monthEnd) {
+        qtyByAsset[tx.asset] += tx.amount / tx.price;
+        totalInvested += tx.amount;
+      }
+    });
+    
+    // Valor al precio del fin de mes (o actual si es el mes vigente)
+    const isCurrent = monthEnd.getMonth() === endDate.getMonth() && monthEnd.getFullYear() === endDate.getFullYear();
+    
+    let totalValue = 0;
+    ASSETS.forEach(a => {
+      let priceAtMonth = prices[a.ticker]; // fallback
+      if (!isCurrent && priceHistoryYearly[a.ticker]) {
+        // Buscar precio de cierre del mes
+        const monthHist = priceHistoryYearly[a.ticker].find(h => {
+          const ht = new Date(h.time);
+          return ht.getMonth() === current.getMonth() && ht.getFullYear() === current.getFullYear();
+        });
+        if (monthHist) priceAtMonth = monthHist.close;
+      }
+      totalValue += qtyByAsset[a.ticker] * (priceAtMonth || 0);
+    });
+    
+    data.push({
+      label: `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`,
+      invested: totalInvested,
+      value: totalValue,
+    });
+    
+    current = new Date(current.getFullYear(), current.getMonth() + 1, 1);
+  }
+  
+  return data;
+}
+
+function drawPortfolioChart(data) {
+  const ctx = document.getElementById('portfolioChart');
+  if (!ctx) return;
+  
+  if (portfolioChartInstance) portfolioChartInstance.destroy();
+  
+  if (data.length === 0) {
+    ctx.style.display = 'none';
+    return;
+  }
+  ctx.style.display = 'block';
+  
+  portfolioChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.map(d => d.label),
+      datasets: [{
+        label: 'Invertido acumulado',
+        data: data.map(d => d.invested),
+        borderColor: '#8b949e',
+        borderWidth: 2,
+        fill: false,
+        borderDash: [5, 5],
+      }, {
+        label: 'Valor del portfolio',
+        data: data.map(d => d.value),
+        borderColor: '#58a6ff',
+        backgroundColor: 'rgba(88, 166, 255, 0.1)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.3,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#e6edf3', font: { family: 'JetBrains Mono', size: 11 } } },
+        tooltip: { callbacks: { label: (c) => `${c.dataset.label}: $${c.parsed.y.toFixed(2)}` } }
+      },
+      scales: {
+        x: { ticks: { color: '#8b949e', font: { family: 'JetBrains Mono', size: 10 } }, grid: { color: '#1f2630' } },
+        y: { ticks: { color: '#8b949e', font: { family: 'JetBrains Mono', size: 10 }, callback: (v) => '$' + v.toFixed(0) }, grid: { color: '#1f2630' } }
+      }
+    }
+  });
+}
+
+// ============================================
+// DISTRIBUTION TAB
+// ============================================
+function renderDistribution(positions, totalValue) {
+  // Actual distribution
+  const actualBar = ASSETS.map(a => {
+    const pos = positions.find(p => p.ticker === a.ticker);
+    const pct = totalValue > 0 ? (pos.currentValue / totalValue * 100) : 0;
+    return { ticker: a.ticker, color: a.color, pct, value: pos.currentValue };
+  });
+  
+  document.getElementById('actualDistBar').innerHTML = actualBar.map(b => 
+    `<div class="dist-segment" style="width:${b.pct}%; background:${b.color}">${b.pct >= 5 ? b.ticker + ' ' + b.pct.toFixed(0) + '%' : ''}</div>`
+  ).join('');
+  
+  document.getElementById('targetDistBar').innerHTML = ASSETS.map(a => 
+    `<div class="dist-segment" style="width:${a.alloc * 100}%; background:${a.color}; opacity:0.6">${a.alloc * 100 >= 5 ? a.ticker + ' ' + (a.alloc * 100).toFixed(0) + '%' : ''}</div>`
+  ).join('');
+  
+  // Table
+  const tableHTML = ASSETS.map(a => {
+    const pos = positions.find(p => p.ticker === a.ticker);
+    const actualPct = totalValue > 0 ? (pos.currentValue / totalValue * 100) : 0;
+    const targetPct = a.alloc * 100;
+    const dev = actualPct - targetPct;
+    let suggestion = 'OK';
+    let suggClass = '';
+    if (Math.abs(dev) > 5) {
+      if (dev > 0) { suggestion = 'Sobreponderado, considerá comprar menos'; suggClass = 'dev-negative'; }
+      else { suggestion = 'Subponderado, considerá comprar más'; suggClass = 'dev-positive'; }
+    }
+    return `
+      <tr>
+        <td style="color:${a.color}; font-weight:700;">${a.ticker}</td>
+        <td>${targetPct.toFixed(0)}%</td>
+        <td>${actualPct.toFixed(1)}%</td>
+        <td class="${dev > 0 ? 'dev-negative' : 'dev-positive'}">${dev >= 0 ? '+' : ''}${dev.toFixed(1)}%</td>
+        <td class="${suggClass}" style="font-size:12px;">${suggestion}</td>
+      </tr>`;
+  }).join('');
+  document.getElementById('distributionBody').innerHTML = tableHTML;
+}
+
+// ============================================
+// CALENDAR TAB
+// ============================================
+function getMonthsBought() {
+  const months = new Set();
+  const monthsWithMult = new Set();
+  
+  // Para detectar multiplicador, calculamos cost basis al momento de cada compra
+  const sortedTxs = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
+  const positionState = {}; // {asset: {qty, totalCost}}
+  
+  sortedTxs.forEach(tx => {
+    if (!positionState[tx.asset]) positionState[tx.asset] = { qty: 0, totalCost: 0 };
+    
+    const cb = positionState[tx.asset].qty > 0 ? positionState[tx.asset].totalCost / positionState[tx.asset].qty : 0;
+    const ddVsCost = cb > 0 ? (cb - tx.price) / cb : 0;
+    const mult = getMultiplier(ddVsCost);
+    
+    const monthKey = tx.date.substring(0, 7); // YYYY-MM
+    months.add(monthKey);
+    if (mult > 1.0) monthsWithMult.add(monthKey);
+    
+    positionState[tx.asset].qty += tx.amount / tx.price;
+    positionState[tx.asset].totalCost += tx.amount;
+  });
+  
+  return { months, monthsWithMult };
+}
+
+function calculateStreak(monthsObj) {
+  const months = monthsObj.months || monthsObj;
+  if (months.size === 0) return 0;
+  
+  const sortedMonths = Array.from(months).sort();
+  const currentMonthKey = new Date().toISOString().substring(0, 7);
+  
+  let streak = 0;
+  let checkDate = new Date();
+  
+  for (let i = 0; i < 60; i++) {
+    const key = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}`;
+    if (months.has(key)) streak++;
+    else if (i > 0) break;
+    checkDate.setMonth(checkDate.getMonth() - 1);
+  }
+  
+  return streak;
+}
+
+function renderCalendar() {
+  const { months, monthsWithMult } = getMonthsBought();
+  
+  if (months.size === 0) {
+    document.getElementById('calendarYears').innerHTML = '<div style="color:var(--text-dim); padding:20px; text-align:center;">Sin compras registradas todavía</div>';
+    document.getElementById('monthsBought').textContent = '0';
+    document.getElementById('monthsMult').textContent = '0';
+    document.getElementById('currentStreak').textContent = '0';
+    return;
+  }
+  
+  // Determinar rango de años
+  const sortedMonths = Array.from(months).sort();
+  const firstYear = parseInt(sortedMonths[0].substring(0, 4));
+  const currentYear = new Date().getFullYear();
+  
+  let html = '';
+  for (let year = firstYear; year <= currentYear; year++) {
+    let yearHTML = `<div class="calendar-year-row"><div class="calendar-year-label">${year}</div><div class="calendar-grid" style="flex:1;">`;
+    for (let m = 0; m < 12; m++) {
+      const key = `${year}-${String(m + 1).padStart(2, '0')}`;
+      const monthName = new Date(year, m, 1).toLocaleString('es-AR', { month: 'short' });
+      let cls = 'calendar-month';
+      if (monthsWithMult.has(key)) cls += ' bought-mult';
+      else if (months.has(key)) cls += ' bought';
+      yearHTML += `<div class="${cls}" title="${key}">${monthName}</div>`;
+    }
+    yearHTML += '</div></div>';
+    html += yearHTML;
+  }
+  
+  document.getElementById('calendarYears').innerHTML = html;
+  document.getElementById('monthsBought').textContent = months.size;
+  document.getElementById('monthsMult').textContent = monthsWithMult.size;
+  document.getElementById('currentStreak').textContent = calculateStreak({ months });
+}
+
+// ============================================
+// SCENARIOS TAB
+// ============================================
+function renderScenarios(positions) {
+  const scenarios = [
+    {
+      name: 'Conservador',
+      cls: 'scenario-conservative',
+      mult: '2x',
+      prices: { BTC: 150000, ETH: 5000, SOL: 400, BNB: 1200 }
+    },
+    {
+      name: 'Moderado',
+      cls: 'scenario-moderate',
+      mult: '3x',
+      prices: { BTC: 200000, ETH: 8000, SOL: 600, BNB: 1800 }
+    },
+    {
+      name: 'Optimista',
+      cls: 'scenario-optimistic',
+      mult: '5x',
+      prices: { BTC: 300000, ETH: 12000, SOL: 1000, BNB: 2500 }
+    }
+  ];
+  
+  const html = scenarios.map(s => {
+    let totalAtScenario = 0;
+    let totalInvested = 0;
+    const assetCards = ASSETS.map(a => {
+      const pos = positions.find(p => p.ticker === a.ticker);
+      const valueAtScenario = pos.totalQty * s.prices[a.ticker];
+      const xMultiplier = pos.currentPrice > 0 ? s.prices[a.ticker] / pos.currentPrice : 0;
+      totalAtScenario += valueAtScenario;
+      totalInvested += pos.totalInvested;
+      return `
+        <div class="scenario-asset">
+          <div class="ticker-name" style="color:${a.color}">${a.ticker}</div>
+          <div class="price-target">$${s.prices[a.ticker].toLocaleString()}</div>
+          <div class="multiplier">${xMultiplier.toFixed(1)}x desde hoy</div>
+          <div style="margin-top:4px; color:var(--text);">Valor: $${valueAtScenario.toFixed(0)}</div>
+        </div>`;
+    }).join('');
+    
+    const profit = totalAtScenario - totalInvested;
+    const profitPct = totalInvested > 0 ? (profit / totalInvested) * 100 : 0;
+    
+    return `
+      <div class="scenario-card">
+        <div class="scenario-header">
+          <div class="scenario-name">${s.name}</div>
+          <div class="scenario-multiplier ${s.cls}">${s.mult} desde precios actuales</div>
+        </div>
+        <div class="scenario-grid">${assetCards}</div>
+        <div style="margin-top: 16px; padding: 12px; background: var(--bg-card); border-radius: 6px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; font-family: var(--mono);">
+          <div><div style="color:var(--text-dim); font-size:10px; text-transform:uppercase;">Invertido</div><div style="font-weight:700; font-size:16px;">$${totalInvested.toFixed(0)}</div></div>
+          <div><div style="color:var(--text-dim); font-size:10px; text-transform:uppercase;">Valor estimado</div><div style="font-weight:700; font-size:16px; color:var(--green)">$${totalAtScenario.toFixed(0)}</div></div>
+          <div><div style="color:var(--text-dim); font-size:10px; text-transform:uppercase;">Ganancia</div><div style="font-weight:700; font-size:16px; color:${profit >= 0 ? 'var(--green)' : 'var(--red)'}">${profit >= 0 ? '+' : ''}$${profit.toFixed(0)} (${profitPct >= 0 ? '+' : ''}${profitPct.toFixed(0)}%)</div></div>
+        </div>
+      </div>`;
+  }).join('');
+  
+  document.getElementById('scenariosContainer').innerHTML = html;
+}
+
+// ============================================
+// STATS TAB
+// ============================================
+function renderStats(positions, totalInvested, totalValue) {
+  // Avg buy prices
+  ASSETS.forEach(a => {
+    const pos = positions.find(p => p.ticker === a.ticker);
+    const id = `avg${a.ticker.charAt(0).toUpperCase() + a.ticker.slice(1).toLowerCase()}Price`;
+    const el = document.getElementById(id);
+    if (el) el.textContent = pos.costBasis > 0 ? `$${pos.costBasis.toFixed(2)}` : '—';
+  });
+  
+  // IRR estimate (simplified)
+  if (transactions.length > 0) {
+    const sortedTxs = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
+    const firstDate = new Date(sortedTxs[0].date);
+    const today = new Date();
+    const daysElapsed = (today - firstDate) / (1000 * 60 * 60 * 24);
+    const yearsElapsed = daysElapsed / 365;
+    
+    document.getElementById('daysInvesting').textContent = Math.floor(daysElapsed);
+    
+    // IRR aproximada (simple): (final/invested)^(1/years) - 1
+    if (yearsElapsed > 0.1 && totalInvested > 0) {
+      const ratio = totalValue / totalInvested;
+      const irr = (Math.pow(ratio, 1 / yearsElapsed) - 1) * 100;
+      const irrEl = document.getElementById('irrEstimate');
+      irrEl.textContent = `${irr >= 0 ? '+' : ''}${irr.toFixed(1)}%`;
+      irrEl.className = 'value ' + (irr >= 0 ? 'profit-positive' : 'profit-negative');
+    } else {
+      document.getElementById('irrEstimate').textContent = '— (poca data)';
+    }
+    
+    // Avg monthly investment
+    const monthsBetween = Math.max(1, yearsElapsed * 12);
+    document.getElementById('avgMonthlyInvestment').textContent = `$${(totalInvested / monthsBetween).toFixed(2)}`;
+  } else {
+    document.getElementById('daysInvesting').textContent = '0';
+    document.getElementById('irrEstimate').textContent = '—';
+    document.getElementById('avgMonthlyInvestment').textContent = '$0';
+  }
+  
+  // HODL comparison: si hubieras comprado siempre 1x base (sin multiplicador)
+  let hodlInvested = 0;
+  let hodlValue = 0;
+  
+  ASSETS.forEach(a => {
+    const pos = positions.find(p => p.ticker === a.ticker);
+    const sortedTxs = [...pos.txs].sort((a, b) => new Date(a.date) - new Date(b.date));
+    const baseForAsset = settings.baseMonthly * a.alloc;
+    
+    // Simular HODL: cada mes con compra, comprar SOLO base (no multiplicado)
+    const months = new Set(sortedTxs.map(t => t.date.substring(0, 7)));
+    
+    months.forEach(monthKey => {
+      // El precio promedio del mes (usar primer compra de ese mes como aproximación)
+      const txInMonth = sortedTxs.find(t => t.date.startsWith(monthKey));
+      if (txInMonth) {
+        hodlInvested += baseForAsset;
+        hodlValue += (baseForAsset / txInMonth.price) * pos.currentPrice;
+      }
+    });
+  });
+  
+  const hodlPnL = hodlValue - hodlInvested;
+  const hodlPnLPct = hodlInvested > 0 ? (hodlPnL / hodlInvested) * 100 : 0;
+  const hodlRatio = hodlInvested > 0 ? hodlValue / hodlInvested : 0;
+  const cmRatio = totalInvested > 0 ? totalValue / totalInvested : 0;
+  const cmPnL = totalValue - totalInvested;
+  const cmPnLPct = totalInvested > 0 ? (cmPnL / totalInvested) * 100 : 0;
+  
+  document.getElementById('comparisonBody').innerHTML = `
+    <tr>
+      <td style="font-weight:700;">Tu sistema (C Moderado)</td>
+      <td>$${totalInvested.toFixed(2)}</td>
+      <td>$${totalValue.toFixed(2)}</td>
+      <td class="${cmPnL >= 0 ? 'profit-positive' : 'profit-negative'}">${cmPnL >= 0 ? '+' : ''}$${cmPnL.toFixed(2)} (${cmPnLPct >= 0 ? '+' : ''}${cmPnLPct.toFixed(1)}%)</td>
+      <td>${cmRatio.toFixed(3)}x</td>
+    </tr>
+    <tr>
+      <td style="color:var(--text-dim);">HODL puro (sin multiplicador)</td>
+      <td>$${hodlInvested.toFixed(2)}</td>
+      <td>$${hodlValue.toFixed(2)}</td>
+      <td class="${hodlPnL >= 0 ? 'profit-positive' : 'profit-negative'}">${hodlPnL >= 0 ? '+' : ''}$${hodlPnL.toFixed(2)} (${hodlPnLPct >= 0 ? '+' : ''}${hodlPnLPct.toFixed(1)}%)</td>
+      <td>${hodlRatio.toFixed(3)}x</td>
+    </tr>
+  `;
+}
+
+// ============================================
+// JOURNAL TAB
+// ============================================
+function renderJournal() {
+  if (!document.getElementById('journalDate').value) {
+    document.getElementById('journalDate').valueAsDate = new Date();
+  }
+  
+  const sorted = [...journalEntries].sort((a, b) => new Date(b.date) - new Date(a.date));
+  
+  if (sorted.length === 0) {
+    document.getElementById('journalEntries').innerHTML = '<div style="color:var(--text-dim); padding:20px; text-align:center;">Sin entradas todavía. Empezá a anotar tus pensamientos del mercado.</div>';
+    return;
+  }
+  
+  const html = sorted.map((e, idx) => {
+    const realIdx = journalEntries.indexOf(e);
+    const moodCls = `mood-${e.mood}`;
+    const moodLabel = e.mood === 'bullish' ? '↑ bullish' : e.mood === 'bearish' ? '↓ bearish' : '— neutral';
+    return `
+      <div class="journal-entry">
+        <div class="journal-header">
+          <div class="journal-date">${e.date}</div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span class="journal-mood ${moodCls}">${moodLabel}</span>
+            <button class="tx-delete" onclick="deleteJournalEntry(${realIdx})" title="Borrar">✕</button>
+          </div>
+        </div>
+        <div class="journal-text">${e.text}</div>
+      </div>`;
+  }).join('');
+  
+  document.getElementById('journalEntries').innerHTML = html;
+}
+
+function addJournalEntry() {
+  const text = document.getElementById('journalText').value.trim();
+  const date = document.getElementById('journalDate').value;
+  const mood = document.getElementById('journalMood').value;
+  
+  if (!text || !date) {
+    alert('Escribí algo y elegí una fecha');
+    return;
+  }
+  
+  journalEntries.push({ text, date, mood });
+  saveState();
+  document.getElementById('journalText').value = '';
+  renderJournal();
+}
+
+function deleteJournalEntry(idx) {
+  if (!confirm('¿Borrar esta entrada?')) return;
+  journalEntries.splice(idx, 1);
+  saveState();
+  renderJournal();
+}
+
+// ============================================
+// SELL RULES TAB
+// ============================================
+function renderSellRules(positions) {
+  const rulesHTML = ASSETS.map(a => {
+    const pos = positions.find(p => p.ticker === a.ticker);
+    const prevAth = PREV_CYCLE_ATH[a.ticker];
+    const currentPrice = pos.currentPrice;
+    
+    const rules = [
+      { name: `Regla 1: precio > ATH ciclo anterior ($${prevAth.toLocaleString()})`, target: prevAth, action: 'Vender 30%' },
+      { name: `Regla 2: precio > ATH × 1.5 ($${(prevAth * 1.5).toLocaleString()})`, target: prevAth * 1.5, action: 'Vender 30% más' },
+      { name: `Regla 3: precio > ATH × 2 ($${(prevAth * 2).toLocaleString()})`, target: prevAth * 2, action: 'Vender 30% más' },
+      { name: `Regla 4: caída -25% desde peak local`, target: null, action: 'Vender 30% (señal fin bull)' },
+    ];
+    
+    const ruleHTML = rules.map(r => {
+      let progress = 0;
+      let statusClass = 'status-pending';
+      let statusText = 'Pendiente';
+      
+      if (r.target) {
+        progress = Math.min((currentPrice / r.target) * 100, 100);
+        if (progress >= 100) { statusClass = 'status-triggered'; statusText = 'Disparada ✓'; }
+        else if (progress >= 80) { statusClass = 'status-close'; statusText = 'Cerca'; }
+      } else {
+        statusText = 'Solo activa post-bull';
+      }
+      
+      return `
+        <div class="sell-rule-card">
+          <div class="sell-rule-header">
+            <div class="sell-rule-title">${r.name}</div>
+            <div class="sell-rule-status ${statusClass}">${statusText}</div>
+          </div>
+          ${r.target ? `
+            <div class="sell-progress"><div class="sell-progress-fill" style="width:${progress}%"></div></div>
+            <div style="font-family:var(--mono); font-size:11px; color:var(--text-dim); display:flex; justify-content:space-between;">
+              <span>Precio actual: $${currentPrice.toLocaleString()}</span>
+              <span>${progress.toFixed(0)}% del target</span>
+            </div>
+          ` : ''}
+          <div style="margin-top:8px; font-family:var(--mono); font-size:11px; color:var(--blue);">→ ${r.action}</div>
+        </div>`;
+    }).join('');
+    
+    return `
+      <div style="margin-bottom: 32px;">
+        <h3 style="color:${a.color}; margin-bottom: 12px; font-size: 16px;">${a.ticker} <span style="font-family:var(--mono); font-size:12px; color:var(--text-dim); margin-left: 8px;">${pos.totalQty.toFixed(6)} ${a.ticker}</span></h3>
+        ${ruleHTML}
+      </div>`;
+  }).join('');
+  
+  document.getElementById('sellRulesContainer').innerHTML = rulesHTML;
 }
 
 // ============================================
@@ -709,7 +1765,6 @@ function addTransaction() {
   saveState();
   render();
   
-  // Clear form
   document.getElementById('txAmount').value = '';
   document.getElementById('txPrice').value = '';
 }
@@ -725,7 +1780,7 @@ function deleteTransaction(idx) {
 // EXPORT/IMPORT
 // ============================================
 function exportData() {
-  const data = { transactions, settings, exported: new Date().toISOString() };
+  const data = { transactions, journalEntries, settings, exported: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -746,13 +1801,14 @@ function importData() {
       try {
         const data = JSON.parse(ev.target.result);
         if (data.transactions) transactions = data.transactions;
+        if (data.journalEntries) journalEntries = data.journalEntries;
         if (data.settings) settings = { ...settings, ...data.settings };
         saveState();
         document.getElementById('baseMonthly').value = settings.baseMonthly;
         document.getElementById('emergencyCapital').value = settings.emergencyCapital;
         document.getElementById('emergencyTrigger').value = settings.emergencyTrigger;
         render();
-        alert(`✓ Importadas ${transactions.length} compras`);
+        alert(`✓ Importadas ${transactions.length} compras y ${journalEntries.length} entradas de journal`);
       } catch (err) {
         alert('Error al importar: ' + err.message);
       }
@@ -763,10 +1819,11 @@ function importData() {
 }
 
 function resetData() {
-  if (!confirm('⚠️ Esto va a borrar TODAS las compras y configuración. ¿Estás seguro?')) return;
+  if (!confirm('⚠️ Esto va a borrar TODAS las compras, journal y configuración. ¿Estás seguro?')) return;
   if (!confirm('Última oportunidad. ¿Realmente borrar todo?')) return;
   localStorage.removeItem('cryptoDCA');
   transactions = [];
+  journalEntries = [];
   settings = { baseMonthly: 300, emergencyCapital: 1000, emergencyTrigger: 50 };
   document.getElementById('baseMonthly').value = 300;
   document.getElementById('emergencyCapital').value = 1000;
@@ -781,8 +1838,6 @@ document.getElementById('txDate').valueAsDate = new Date();
 loadState();
 render();
 refreshPrices();
-
-// Auto-refresh prices every 60s
 setInterval(refreshPrices, 60000);
 </script>
 
