@@ -29,6 +29,14 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Scrollbar global - estética dark consistente */
+* { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+*::-webkit-scrollbar-thumb:hover { background: #2a3440; }
+*::-webkit-scrollbar-corner { background: transparent; }
+
 body {
   background: var(--bg); color: var(--text); font-family: var(--display);
   min-height: 100vh; padding: 24px; font-size: 15px;
@@ -216,7 +224,7 @@ button.danger:hover { background: var(--red); color: var(--bg); }
 
 /* TRANSACTIONS */
 .add-tx-form {
-  display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 12px;
+  display: grid; grid-template-columns: 1fr 1fr 1fr 1.3fr auto; gap: 12px;
   margin-bottom: 16px; padding: 16px; background: var(--bg); border-radius: 8px;
   border: 1px dashed var(--border);
 }
@@ -225,8 +233,6 @@ button.danger:hover { background: var(--red); color: var(--bg); }
   padding: 8px 10px; border-radius: 6px; font-family: var(--mono); font-size: 13px;
 }
 .tx-list { max-height: 320px; overflow-y: auto; }
-.tx-list::-webkit-scrollbar { width: 6px; }
-.tx-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 .tx-row {
   display: grid; grid-template-columns: 110px 80px 1fr 1fr 1fr auto;
   gap: 12px; padding: 10px 12px; border-bottom: 1px solid var(--border);
@@ -372,6 +378,35 @@ button.danger:hover { background: var(--red); color: var(--bg); }
   background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
   padding: 16px; margin-bottom: 12px;
 }
+
+/* Sell alert banner (visible en pestaña Resumen) */
+.sell-alert-banner {
+  background: linear-gradient(135deg, rgba(86, 211, 100, 0.15), rgba(88, 166, 255, 0.15));
+  border: 1px solid var(--green); border-radius: 12px;
+  padding: 20px 24px; margin-bottom: 20px;
+  display: flex; align-items: center; gap: 16px;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(86, 211, 100, 0.3); }
+  50% { box-shadow: 0 0 30px 0 rgba(86, 211, 100, 0.2); }
+}
+.sell-alert-icon { font-size: 32px; }
+.sell-alert-title { color: var(--green); font-weight: 700; font-size: 18px; margin-bottom: 4px; }
+.sell-alert-desc { color: var(--text); font-size: 13px; line-height: 1.5; }
+.sell-alert-action {
+  background: var(--green); color: var(--bg); padding: 8px 16px; border-radius: 8px;
+  font-weight: 700; font-family: var(--mono); font-size: 12px; cursor: pointer; border: none;
+}
+.sell-alert-action:hover { background: #4ac358; border: none; }
+
+/* Tab badge para indicar reglas disparadas */
+.tab-badge {
+  display: inline-block; background: var(--green); color: var(--bg);
+  font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 10px;
+  margin-left: 6px; font-family: var(--mono);
+  animation: pulse 1.5s ease-in-out infinite;
+}
 .sell-rule-header {
   display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
 }
@@ -470,6 +505,7 @@ button.danger:hover { background: var(--red); color: var(--bg); }
 
 <!-- TAB: RESUMEN -->
 <div id="tab-main" class="tab-content active">
+  <div id="sellAlertBanner"></div>
   <div class="main-grid">
     <div class="card">
       <div class="card-subtitle">📊 Resumen del portfolio</div>
@@ -763,14 +799,17 @@ button.danger:hover { background: var(--red); color: var(--bg); }
     
     <div class="add-tx-form">
       <input type="date" id="txDate" required>
-      <select id="txAsset">
+      <select id="txAsset" onchange="updateCurrentPriceButton()">
         <option value="BTC">BTC</option>
         <option value="ETH">ETH</option>
         <option value="SOL">SOL</option>
         <option value="BNB">BNB</option>
       </select>
       <input type="number" id="txAmount" placeholder="USD invertidos" step="0.01" min="0">
-      <input type="number" id="txPrice" placeholder="Precio compra" step="0.01" min="0">
+      <div style="display:flex; gap:6px;">
+        <input type="number" id="txPrice" placeholder="Precio compra" step="0.01" min="0" style="flex:1;">
+        <button onclick="useCurrentPrice()" id="useCurrentPriceBtn" style="padding:8px 12px; font-size:11px; white-space:nowrap;" title="Usar precio actual de Binance">⚡ Actual</button>
+      </div>
       <button class="primary" onclick="addTransaction()">+ Agregar</button>
     </div>
 
@@ -1695,6 +1734,9 @@ function deleteJournalEntry(idx) {
 // SELL RULES TAB
 // ============================================
 function renderSellRules(positions) {
+  let triggeredRules = [];  // Track all triggered rules across assets
+  let closeRules = [];       // Rules within 80% of trigger
+  
   const rulesHTML = ASSETS.map(a => {
     const pos = positions.find(p => p.ticker === a.ticker);
     const prevAth = PREV_CYCLE_ATH[a.ticker];
@@ -1707,15 +1749,26 @@ function renderSellRules(positions) {
       { name: `Regla 4: caída -25% desde peak local`, target: null, action: 'Vender 30% (señal fin bull)' },
     ];
     
-    const ruleHTML = rules.map(r => {
+    const ruleHTML = rules.map((r, ruleIdx) => {
       let progress = 0;
       let statusClass = 'status-pending';
       let statusText = 'Pendiente';
       
       if (r.target) {
         progress = Math.min((currentPrice / r.target) * 100, 100);
-        if (progress >= 100) { statusClass = 'status-triggered'; statusText = 'Disparada ✓'; }
-        else if (progress >= 80) { statusClass = 'status-close'; statusText = 'Cerca'; }
+        if (progress >= 100) { 
+          statusClass = 'status-triggered'; 
+          statusText = 'Disparada ✓';
+          if (pos.totalQty > 0) {  // Solo trackear si tiene holdings
+            triggeredRules.push({ asset: a.ticker, ruleNum: ruleIdx + 1, ruleName: r.name, action: r.action, color: a.color });
+          }
+        } else if (progress >= 80) { 
+          statusClass = 'status-close'; 
+          statusText = 'Cerca';
+          if (pos.totalQty > 0) {
+            closeRules.push({ asset: a.ticker, ruleNum: ruleIdx + 1, progress, color: a.color });
+          }
+        }
       } else {
         statusText = 'Solo activa post-bull';
       }
@@ -1745,6 +1798,103 @@ function renderSellRules(positions) {
   }).join('');
   
   document.getElementById('sellRulesContainer').innerHTML = rulesHTML;
+  
+  // Update sell alert banner in main tab
+  updateSellAlertBanner(triggeredRules, closeRules);
+  
+  // Update tab badge
+  updateSellTabBadge(triggeredRules.length);
+  
+  // Native notification
+  notifyTriggeredRules(triggeredRules);
+}
+
+function updateSellAlertBanner(triggered, close) {
+  const banner = document.getElementById('sellAlertBanner');
+  if (!banner) return;
+  
+  if (triggered.length > 0) {
+    const list = triggered.map(r => 
+      `<div style="margin: 4px 0; font-family: var(--mono); font-size: 12px;">
+        <strong style="color: ${r.color}">${r.asset}</strong> · Regla ${r.ruleNum} → ${r.action}
+      </div>`
+    ).join('');
+    
+    banner.innerHTML = `
+      <div class="sell-alert-banner">
+        <div class="sell-alert-icon">🔔</div>
+        <div style="flex: 1;">
+          <div class="sell-alert-title">¡${triggered.length} regla${triggered.length > 1 ? 's' : ''} de venta disparada${triggered.length > 1 ? 's' : ''}!</div>
+          <div class="sell-alert-desc">El precio superó tus targets. Considerá tomar ganancias según las reglas.</div>
+          ${list}
+        </div>
+        <button class="sell-alert-action" onclick="switchTab('sell')">Ver reglas →</button>
+      </div>`;
+  } else if (close.length > 0) {
+    const list = close.map(r => 
+      `<span style="margin: 0 8px 0 0; font-family: var(--mono); font-size: 12px;">
+        <strong style="color: ${r.color}">${r.asset}</strong> R${r.ruleNum} (${r.progress.toFixed(0)}%)
+      </span>`
+    ).join('');
+    
+    banner.innerHTML = `
+      <div class="sell-alert-banner" style="border-color: var(--yellow); background: linear-gradient(135deg, rgba(240, 198, 116, 0.1), rgba(255, 126, 63, 0.1)); animation: none;">
+        <div class="sell-alert-icon" style="color: var(--yellow);">⚠️</div>
+        <div style="flex: 1;">
+          <div class="sell-alert-title" style="color: var(--yellow);">Reglas cerca de dispararse</div>
+          <div class="sell-alert-desc">Algunas reglas están al 80%+ del target: ${list}</div>
+        </div>
+        <button class="sell-alert-action" style="background: var(--yellow);" onclick="switchTab('sell')">Ver reglas →</button>
+      </div>`;
+  } else {
+    banner.innerHTML = '';
+  }
+}
+
+function updateSellTabBadge(count) {
+  const tab = document.querySelector('.tab[onclick="switchTab(\'sell\')"]');
+  if (!tab) return;
+  
+  // Remove old badge
+  const oldBadge = tab.querySelector('.tab-badge');
+  if (oldBadge) oldBadge.remove();
+  
+  if (count > 0) {
+    const badge = document.createElement('span');
+    badge.className = 'tab-badge';
+    badge.textContent = count;
+    tab.appendChild(badge);
+  }
+}
+
+// Track which rules we already notified about (to avoid spam)
+let notifiedRules = JSON.parse(localStorage.getItem('cryptoDCA_notifiedRules') || '[]');
+
+function notifyTriggeredRules(triggered) {
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+  
+  triggered.forEach(r => {
+    const ruleKey = `${r.asset}-R${r.ruleNum}`;
+    if (!notifiedRules.includes(ruleKey)) {
+      try {
+        new Notification(`🔔 ${r.asset}: Regla ${r.ruleNum} disparada`, {
+          body: `${r.ruleName}\n→ ${r.action}`,
+          icon: '',
+          tag: ruleKey,
+        });
+        notifiedRules.push(ruleKey);
+        localStorage.setItem('cryptoDCA_notifiedRules', JSON.stringify(notifiedRules));
+      } catch (e) { console.error('Error notification:', e); }
+    }
+  });
+}
+
+// Pedir permiso de notificaciones al cargar (1 vez)
+if ('Notification' in window && Notification.permission === 'default') {
+  setTimeout(() => {
+    Notification.requestPermission();
+  }, 3000);  // Esperar 3s para no ser invasivo
 }
 
 // ============================================
@@ -1767,6 +1917,29 @@ function addTransaction() {
   
   document.getElementById('txAmount').value = '';
   document.getElementById('txPrice').value = '';
+}
+
+function useCurrentPrice() {
+  const asset = document.getElementById('txAsset').value;
+  const currentPrice = prices[asset];
+  if (!currentPrice || currentPrice === 0) {
+    alert('Precio actual no disponible. Click "↻ Actualizar precios" primero.');
+    return;
+  }
+  document.getElementById('txPrice').value = currentPrice.toFixed(2);
+  // Set today's date if empty
+  if (!document.getElementById('txDate').value) {
+    document.getElementById('txDate').valueAsDate = new Date();
+  }
+}
+
+function updateCurrentPriceButton() {
+  const asset = document.getElementById('txAsset').value;
+  const currentPrice = prices[asset];
+  const btn = document.getElementById('useCurrentPriceBtn');
+  if (btn && currentPrice) {
+    btn.title = `Usar precio actual de ${asset}: $${currentPrice.toFixed(2)}`;
+  }
 }
 
 function deleteTransaction(idx) {
