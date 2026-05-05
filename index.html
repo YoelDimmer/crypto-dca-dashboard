@@ -515,17 +515,18 @@ button.danger:hover { background: var(--red); color: var(--bg); }
           <div class="value" id="totalInvested">$0</div>
         </div>
         <div class="summary-stat">
-          <div class="label">Valor actual</div>
+          <div class="label">Valor cripto</div>
           <div class="value" id="totalValue">$0</div>
         </div>
         <div class="summary-stat">
-          <div class="label">Ganancia/Pérdida</div>
-          <div class="value" id="totalPnL">$0</div>
-          <div class="sub" id="totalPnLPct">0.00%</div>
+          <div class="label">USDT disponible</div>
+          <div class="value" id="usdtAvailableSummary" style="color: var(--green);">$0</div>
+          <div class="sub">cash en exchange</div>
         </div>
         <div class="summary-stat">
-          <div class="label">Compras totales</div>
-          <div class="value" id="totalBuys">0</div>
+          <div class="label">Patrimonio total</div>
+          <div class="value" id="totalEquity">$0</div>
+          <div class="sub" id="totalPnL">$0 P/L</div>
         </div>
         <div class="summary-stat">
           <div class="label">Próxima compra (mes)</div>
@@ -777,12 +778,73 @@ button.danger:hover { background: var(--red); color: var(--bg); }
 <!-- TAB: REGLAS DE VENTA -->
 <div id="tab-sell" class="tab-content">
   <div class="card">
+    <div class="card-title">⚙️ Configuración de reglas</div>
+    <div class="card-subtitle">Editá los ATHs target y multiplicadores. Si no estás seguro, dejá los defaults.</div>
+    
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 16px;">
+      <div>
+        <div style="color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; font-family: var(--mono);">ATH ciclo anterior por asset (USD)</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <div>
+            <label style="color: var(--text-dim); font-size: 11px; font-family: var(--mono);">BTC</label>
+            <input type="number" id="ruleAthBTC" step="100" style="width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 6px; font-family: var(--mono); font-size: 13px;">
+          </div>
+          <div>
+            <label style="color: var(--text-dim); font-size: 11px; font-family: var(--mono);">ETH</label>
+            <input type="number" id="ruleAthETH" step="10" style="width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 6px; font-family: var(--mono); font-size: 13px;">
+          </div>
+          <div>
+            <label style="color: var(--text-dim); font-size: 11px; font-family: var(--mono);">SOL</label>
+            <input type="number" id="ruleAthSOL" step="1" style="width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 6px; font-family: var(--mono); font-size: 13px;">
+          </div>
+          <div>
+            <label style="color: var(--text-dim); font-size: 11px; font-family: var(--mono);">BNB</label>
+            <input type="number" id="ruleAthBNB" step="10" style="width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 6px; font-family: var(--mono); font-size: 13px;">
+          </div>
+        </div>
+      </div>
+      
+      <div>
+        <div style="color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; font-family: var(--mono);">Multiplicadores de target</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px;">
+          <div>
+            <label style="color: var(--text-dim); font-size: 11px; font-family: var(--mono);">Regla 1 ×</label>
+            <input type="number" id="ruleMult1" step="0.1" style="width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 6px; font-family: var(--mono); font-size: 13px;">
+          </div>
+          <div>
+            <label style="color: var(--text-dim); font-size: 11px; font-family: var(--mono);">Regla 2 ×</label>
+            <input type="number" id="ruleMult2" step="0.1" style="width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 6px; font-family: var(--mono); font-size: 13px;">
+          </div>
+          <div>
+            <label style="color: var(--text-dim); font-size: 11px; font-family: var(--mono);">Regla 3 ×</label>
+            <input type="number" id="ruleMult3" step="0.1" style="width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 6px; font-family: var(--mono); font-size: 13px;">
+          </div>
+          <div>
+            <label style="color: var(--text-dim); font-size: 11px; font-family: var(--mono);">R4 -DD%</label>
+            <input type="number" id="ruleMult4" step="0.05" min="0" max="0.5" style="width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 6px; font-family: var(--mono); font-size: 13px;">
+          </div>
+        </div>
+        
+        <div style="margin-top: 12px;">
+          <label style="color: var(--text-dim); font-size: 11px; font-family: var(--mono);">% de holdings a vender por regla</label>
+          <input type="number" id="ruleSellPct" step="5" min="5" max="100" style="width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 6px; font-family: var(--mono); font-size: 13px;">
+        </div>
+      </div>
+    </div>
+    
+    <div style="display: flex; gap: 8px;">
+      <button class="primary" onclick="saveSellRules()">💾 Guardar cambios</button>
+      <button onclick="resetSellRules()">↺ Reset a defaults</button>
+    </div>
+  </div>
+  
+  <div class="card" style="margin-top: 24px;">
     <div class="card-title">💰 Reglas de venta del próximo bull</div>
-    <div class="card-subtitle">Estas reglas se activarán cuando llegue el bull market (~2027-2028). Por ahora son un tracker visual.</div>
+    <div class="card-subtitle">Estas reglas se activarán cuando llegue el bull market. Por ahora son un tracker visual.</div>
     
     <div style="padding: 16px; background: rgba(255, 126, 63, 0.1); border: 1px solid var(--orange); border-radius: 8px; margin-bottom: 20px; font-family: var(--mono); font-size: 12px; color: var(--text-dim); line-height: 1.7;">
       ⚠️ <strong style="color: var(--orange);">FASE ACTUAL: ACUMULACIÓN</strong><br>
-      No vender nada todavía. Estamos en bear/lateral, fase de comprar disciplinadamente. Las reglas de venta se activarán cuando el mercado esté claramente en bull. Este panel te muestra el progreso hacia esos triggers para que vayas viendo cuán cerca estamos.
+      No vender nada todavía. Estamos en bear/lateral, fase de comprar disciplinadamente. Cuando se dispare alguna regla, vas a verla acá y vas a poder registrar la venta en la pestaña "Transacciones".
     </div>
     
     <div id="sellRulesContainer"></div>
@@ -793,11 +855,20 @@ button.danger:hover { background: var(--red); color: var(--bg); }
 <div id="tab-transactions" class="tab-content">
   <div class="card">
     <div class="card-title">
-      <span>📝 Registrar nueva compra</span>
-      <span style="font-family: var(--mono); font-size: 12px; color: var(--text-dim);">Cargá tus compras reales acá</span>
+      <span>📝 Registrar transacción</span>
+      <span style="font-family: var(--mono); font-size: 12px; color: var(--text-dim);">Compra · Venta · USDT</span>
     </div>
     
-    <div class="add-tx-form">
+    <!-- Tipo de transacción -->
+    <div style="margin-bottom: 16px; display: flex; gap: 6px; flex-wrap: wrap;">
+      <button id="txTypeBuy" class="primary" onclick="setTxType('buy')" style="font-size: 13px;">📥 Compra</button>
+      <button id="txTypeSell" onclick="setTxType('sell')" style="font-size: 13px;">📤 Venta</button>
+      <button id="txTypeUsdtIn" onclick="setTxType('usdt_in')" style="font-size: 13px;">💵 Aporte USDT</button>
+      <button id="txTypeUsdtOut" onclick="setTxType('usdt_out')" style="font-size: 13px;">🚪 Retirar USDT</button>
+    </div>
+    
+    <!-- Form para BUY -->
+    <div id="formBuy" class="add-tx-form">
       <input type="date" id="txDate" required>
       <select id="txAsset" onchange="updateCurrentPriceButton()">
         <option value="BTC">BTC</option>
@@ -812,10 +883,73 @@ button.danger:hover { background: var(--red); color: var(--bg); }
       </div>
       <button class="primary" onclick="addTransaction()">+ Agregar</button>
     </div>
+    
+    <!-- Form para SELL -->
+    <div id="formSell" class="add-tx-form" style="display: none;">
+      <input type="date" id="txSellDate" required>
+      <select id="txSellAsset" onchange="updateSellPriceButton(); updateMaxQty();">
+        <option value="BTC">BTC</option>
+        <option value="ETH">ETH</option>
+        <option value="SOL">SOL</option>
+        <option value="BNB">BNB</option>
+      </select>
+      <div style="display:flex; gap:6px;">
+        <input type="number" id="txSellQty" placeholder="Cantidad a vender" step="0.00000001" min="0" style="flex:1;">
+        <button onclick="useMaxQty()" style="padding:8px 12px; font-size:11px; white-space:nowrap;" title="Vender 100% del holding">MAX</button>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <input type="number" id="txSellPrice" placeholder="Precio venta" step="0.01" min="0" style="flex:1;">
+        <button onclick="useSellCurrentPrice()" style="padding:8px 12px; font-size:11px; white-space:nowrap;" title="Usar precio actual">⚡ Actual</button>
+      </div>
+      <button class="primary" onclick="addSellTransaction()" style="background: var(--red); border-color: var(--red);">- Vender</button>
+    </div>
+    
+    <!-- Form para USDT IN -->
+    <div id="formUsdtIn" style="display: none; padding: 16px; background: var(--bg); border-radius: 8px; border: 1px dashed var(--border); margin-bottom: 16px;">
+      <div style="color: var(--text-dim); font-size: 12px; margin-bottom: 12px; font-family: var(--mono);">
+        💡 Cargá USDT que ya tenés en el exchange para tenerlos disponibles para próximas compras
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px;">
+        <input type="date" id="txUsdtInDate" required style="background:var(--bg-card); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:6px; font-family:var(--mono); font-size:13px;">
+        <input type="number" id="txUsdtInAmount" placeholder="USDT a agregar" step="0.01" min="0" style="background:var(--bg-card); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:6px; font-family:var(--mono); font-size:13px;">
+        <button class="primary" onclick="addUsdtIn()">+ Agregar USDT</button>
+      </div>
+      <div style="margin-top: 12px;">
+        <input type="text" id="txUsdtInNote" placeholder="Nota (opcional): ej. 'sueldo de mayo'" style="width: 100%; background:var(--bg-card); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:6px; font-family:var(--display); font-size:13px;">
+      </div>
+    </div>
+    
+    <!-- Form para USDT OUT -->
+    <div id="formUsdtOut" style="display: none; padding: 16px; background: var(--bg); border-radius: 8px; border: 1px dashed var(--border); margin-bottom: 16px;">
+      <div style="color: var(--text-dim); font-size: 12px; margin-bottom: 12px; font-family: var(--mono);">
+        💡 Retirar USDT del portfolio (sacar del exchange a tu cuenta bancaria/personal)
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px;">
+        <input type="date" id="txUsdtOutDate" required style="background:var(--bg-card); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:6px; font-family:var(--mono); font-size:13px;">
+        <input type="number" id="txUsdtOutAmount" placeholder="USDT a retirar" step="0.01" min="0" style="background:var(--bg-card); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:6px; font-family:var(--mono); font-size:13px;">
+        <button class="primary" onclick="addUsdtOut()" style="background: var(--orange); border-color: var(--orange);">- Retirar USDT</button>
+      </div>
+      <div style="margin-top: 12px;">
+        <input type="text" id="txUsdtOutNote" placeholder="Nota (opcional): ej. 'vendí para gastos'" style="width: 100%; background:var(--bg-card); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:6px; font-family:var(--display); font-size:13px;">
+      </div>
+    </div>
+    
+    <!-- USDT Balance display -->
+    <div style="padding: 16px; background: linear-gradient(135deg, rgba(86, 211, 100, 0.05), rgba(20, 241, 149, 0.05)); border: 1px solid var(--green); border-radius: 10px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <div style="color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-family: var(--mono);">💵 USDT disponible</div>
+        <div style="font-size: 28px; font-weight: 700; color: var(--green); font-family: var(--mono);" id="usdtBalance">$0.00</div>
+      </div>
+      <div style="text-align: right; font-size: 12px; font-family: var(--mono); color: var(--text-dim); line-height: 1.6;">
+        De ventas: <span id="usdtFromSells" style="color: var(--text);">$0</span><br>
+        Aportes: <span id="usdtFromIns" style="color: var(--text);">$0</span><br>
+        Retiros: <span id="usdtFromOuts" style="color: var(--text);">$0</span>
+      </div>
+    </div>
 
     <div style="margin-top: 24px;">
       <div style="color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; font-family: var(--mono);">
-        Historial de compras (<span id="txCount">0</span>)
+        Historial de transacciones (<span id="txCount">0</span>)
       </div>
       <div class="tx-list" id="txList"></div>
     </div>
@@ -836,10 +970,16 @@ button.danger:hover { background: var(--red); color: var(--bg); }
           </div>
         </div>
         <div class="help-section">
-          <strong>Capital de emergencia</strong><br>
-          Si UN asset cae más de 50% desde su peak en 30d, se activa la alerta. Vos decidís si meter capital extra.<br><br>
-          <strong>Reglas de venta:</strong> verás el progreso en la pestaña "Reglas venta". Se activarán cuando sea bull confirmado.<br><br>
-          <strong>Backup:</strong> exportá JSON regularmente. Si formateás la PC, importás y todo vuelve.
+          <strong>Tipos de transacción</strong><br>
+          <div style="margin-top: 8px; line-height: 1.8;">
+            <strong style="color: var(--green);">📥 Compra:</strong> registrás compra real de cripto<br>
+            <strong style="color: var(--red);">📤 Venta:</strong> vendés cripto, recibís USDT<br>
+            <strong style="color: var(--blue);">💵 Aporte USDT:</strong> agregás USDT al pool (esperando comprar)<br>
+            <strong style="color: var(--orange);">🚪 Retiro USDT:</strong> sacás USDT del exchange<br>
+          </div>
+          <div style="margin-top: 12px;">
+            <strong>Cost basis:</strong> al vender, tu cost basis se mantiene (precio promedio de las compras restantes). Las ventas se acumulan como "USDT realizado".
+          </div>
         </div>
       </div>
     </div>
@@ -859,19 +999,26 @@ const ASSETS = [
   { ticker: 'BNB', symbol: 'BNBUSDT', alloc: 0.10, color: '#f3ba2f' },
 ];
 
-const PREV_CYCLE_ATH = {
+const DEFAULT_PREV_CYCLE_ATH = {
   BTC: 109000,  // Peak ciclo 2024
   ETH: 4800,
   SOL: 290,
   BNB: 790,
 };
 
+const DEFAULT_SELL_RULES = {
+  prevAth: { ...DEFAULT_PREV_CYCLE_ATH },
+  multipliers: { rule1: 1.0, rule2: 1.5, rule3: 2.0, rule4_dd: 0.25 },
+  sellPct: 0.30,
+};
+
 let prices = { BTC: 0, ETH: 0, SOL: 0, BNB: 0 };
 let priceHistory30d = { BTC: [], ETH: [], SOL: [], BNB: [] };
-let priceHistoryYearly = { BTC: [], ETH: [], SOL: [], BNB: [] };  // Para gráficos largos
-let transactions = [];
+let priceHistoryYearly = { BTC: [], ETH: [], SOL: [], BNB: [] };
+let transactions = [];  // Tipos: 'buy', 'sell', 'usdt_in' (aporte cash), 'usdt_out' (deploy)
 let journalEntries = [];
 let settings = { baseMonthly: 300, emergencyCapital: 1000, emergencyTrigger: 50 };
+let sellRules = JSON.parse(JSON.stringify(DEFAULT_SELL_RULES));
 let selectedAsset = 'BTC';
 let assetChartInstance = null;
 let portfolioChartInstance = null;
@@ -883,8 +1030,11 @@ function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem('cryptoDCA') || '{}');
     transactions = saved.transactions || [];
+    // Migrar transactions sin tipo (legacy) → asumir 'buy'
+    transactions = transactions.map(t => ({ type: 'buy', ...t }));
     journalEntries = saved.journalEntries || [];
     settings = { ...settings, ...(saved.settings || {}) };
+    sellRules = saved.sellRules ? { ...sellRules, ...saved.sellRules } : sellRules;
     document.getElementById('baseMonthly').value = settings.baseMonthly;
     document.getElementById('emergencyCapital').value = settings.emergencyCapital;
     document.getElementById('emergencyTrigger').value = settings.emergencyTrigger;
@@ -892,7 +1042,7 @@ function loadState() {
 }
 
 function saveState() {
-  localStorage.setItem('cryptoDCA', JSON.stringify({ transactions, journalEntries, settings }));
+  localStorage.setItem('cryptoDCA', JSON.stringify({ transactions, journalEntries, settings, sellRules }));
 }
 
 function saveSettings() {
@@ -959,15 +1109,69 @@ async function refreshPrices() {
 // ============================================
 function getPosition(ticker) {
   const txs = transactions.filter(t => t.asset === ticker);
-  const totalQty = txs.reduce((s, t) => s + (t.amount / t.price), 0);
-  const totalInvested = txs.reduce((s, t) => s + t.amount, 0);
-  const costBasis = totalQty > 0 ? totalInvested / totalQty : 0;
+  
+  // Tracking: qty + costBasis se calcula con weighted average
+  let totalQty = 0;
+  let totalInvested = 0;  // capital total puesto en compras (NO se reduce con ventas)
+  let realizedFromSells = 0;  // USDT recibido de ventas
+  let costSum = 0;  // suma de costos de compras (para cost basis weighted)
+  
+  // Procesar transacciones en orden cronológico
+  const sorted = [...txs].sort((a, b) => new Date(a.date) - new Date(b.date));
+  
+  for (const tx of sorted) {
+    const type = tx.type || 'buy';
+    if (type === 'buy') {
+      const qty = tx.amount / tx.price;
+      totalQty += qty;
+      totalInvested += tx.amount;
+      costSum += tx.amount;
+    } else if (type === 'sell') {
+      // Vender: descuenta qty proporcionalmente del cost basis
+      const qtyToSell = tx.qty || (tx.amount / tx.price);
+      if (totalQty > 0) {
+        const cbBeforeSell = costSum / totalQty;
+        const costRemoved = qtyToSell * cbBeforeSell;
+        costSum -= costRemoved;
+        totalQty -= qtyToSell;
+        if (totalQty < 1e-9) totalQty = 0;
+      }
+      const usdReceived = tx.amount || (qtyToSell * tx.price);
+      realizedFromSells += usdReceived;
+    }
+  }
+  
+  const costBasis = totalQty > 0 ? costSum / totalQty : 0;
   const currentPrice = prices[ticker] || 0;
   const currentValue = totalQty * currentPrice;
-  const pnl = currentValue - totalInvested;
+  const pnl = currentValue + realizedFromSells - totalInvested;
   const pnlPct = totalInvested > 0 ? (pnl / totalInvested) * 100 : 0;
   const ddVsCost = costBasis > 0 ? (costBasis - currentPrice) / costBasis : 0;
-  return { ticker, totalQty, totalInvested, costBasis, currentPrice, currentValue, pnl, pnlPct, ddVsCost, txs };
+  
+  return { ticker, totalQty, totalInvested, costBasis, currentPrice, currentValue, 
+           realizedFromSells, pnl, pnlPct, ddVsCost, txs };
+}
+
+function getUSDTBalance() {
+  // Suma de: ventas de assets + aportes manuales - deploys
+  let balance = 0;
+  for (const tx of transactions) {
+    const type = tx.type || 'buy';
+    if (type === 'sell') balance += (tx.amount || 0);
+    else if (type === 'usdt_in') balance += (tx.amount || 0);
+    else if (type === 'usdt_out') balance -= (tx.amount || 0);
+  }
+  return Math.max(0, balance);
+}
+
+function getUsdtNetIns() {
+  // USDT que NO viene de ventas de cripto (aportes manuales netos)
+  let net = 0;
+  for (const tx of transactions) {
+    if (tx.type === 'usdt_in') net += (tx.amount || 0);
+    else if (tx.type === 'usdt_out') net -= (tx.amount || 0);
+  }
+  return net;
 }
 
 function getMultiplier(ddVsCost) {
@@ -1000,6 +1204,7 @@ function switchTab(name) {
   // Render charts when tab becomes visible
   if (name === 'asset') renderAssetTab();
   if (name === 'portfolio') renderPortfolioTab();
+  if (name === 'sell') populateRulesInputs();
 }
 
 // ============================================
@@ -1010,16 +1215,22 @@ function render() {
   
   const totalInvested = positions.reduce((s, p) => s + p.totalInvested, 0);
   const totalValue = positions.reduce((s, p) => s + p.currentValue, 0);
-  const totalPnL = totalValue - totalInvested;
+  const totalRealizedFromSells = positions.reduce((s, p) => s + p.realizedFromSells, 0);
+  const usdtBalance = getUSDTBalance();
+  const totalEquity = totalValue + usdtBalance;
+  // P&L total = (valor cripto + USDT realizado de ventas) - invertido en cripto
+  // Pero cuidado: USDT también puede venir de aportes manuales que no son ganancia
+  const totalPnL = totalEquity - totalInvested - getUsdtNetIns();
   const totalPnLPct = totalInvested > 0 ? (totalPnL / totalInvested) * 100 : 0;
   
   document.getElementById('totalInvested').textContent = `$${totalInvested.toFixed(2)}`;
   document.getElementById('totalValue').textContent = `$${totalValue.toFixed(2)}`;
-  document.getElementById('totalPnL').textContent = `${totalPnL >= 0 ? '+' : ''}$${totalPnL.toFixed(2)}`;
-  document.getElementById('totalPnL').className = 'value ' + (totalPnL >= 0 ? 'profit-positive' : 'profit-negative');
-  document.getElementById('totalPnLPct').textContent = `${totalPnLPct >= 0 ? '+' : ''}${totalPnLPct.toFixed(2)}%`;
-  document.getElementById('totalPnLPct').className = 'sub ' + (totalPnLPct >= 0 ? 'profit-positive' : 'profit-negative');
-  document.getElementById('totalBuys').textContent = transactions.length;
+  document.getElementById('usdtAvailableSummary').textContent = `$${usdtBalance.toFixed(2)}`;
+  document.getElementById('totalEquity').textContent = `$${totalEquity.toFixed(2)}`;
+  
+  const pnlEl = document.getElementById('totalPnL');
+  pnlEl.textContent = `${totalPnL >= 0 ? '+' : ''}$${totalPnL.toFixed(2)} (${totalPnLPct >= 0 ? '+' : ''}${totalPnLPct.toFixed(1)}%)`;
+  pnlEl.className = 'sub ' + (totalPnL >= 0 ? 'profit-positive' : 'profit-negative');
   
   const monthName = new Date().toLocaleString('es-AR', { month: 'long', year: 'numeric' });
   document.getElementById('currentMonth').textContent = monthName;
@@ -1098,22 +1309,75 @@ function render() {
   }).join('');
   document.getElementById('positionsBody').innerHTML = positionsHTML;
   
-  // Transactions
+  // Transactions history
   const txSorted = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
   const txHTML = txSorted.map(t => {
     const realIdx = transactions.indexOf(t);
-    return `
-      <div class="tx-row">
-        <div>${t.date}</div>
-        <div style="color:${ASSETS.find(a => a.ticker === t.asset).color}; font-weight:700;">${t.asset}</div>
-        <div>$${t.amount.toFixed(2)}</div>
-        <div>@ $${t.price.toFixed(2)}</div>
-        <div>${(t.amount / t.price).toFixed(8)}</div>
-        <button class="tx-delete" onclick="deleteTransaction(${realIdx})" title="Borrar">✕</button>
-      </div>`;
+    const type = t.type || 'buy';
+    const assetData = ASSETS.find(a => a.ticker === t.asset);
+    const assetColor = assetData ? assetData.color : 'var(--green)';
+    
+    if (type === 'buy') {
+      const qty = t.amount / t.price;
+      return `
+        <div class="tx-row" style="grid-template-columns: 110px 80px 1fr 1fr 1fr auto;">
+          <div>${t.date}</div>
+          <div style="color:${assetColor}; font-weight:700;">📥 ${t.asset}</div>
+          <div>$${t.amount.toFixed(2)}</div>
+          <div>@ $${t.price.toFixed(2)}</div>
+          <div>${qty.toFixed(8)}</div>
+          <button class="tx-delete" onclick="deleteTransaction(${realIdx})" title="Borrar">✕</button>
+        </div>`;
+    } else if (type === 'sell') {
+      const qty = t.qty || (t.amount / t.price);
+      const usdReceived = t.amount || (qty * t.price);
+      return `
+        <div class="tx-row" style="grid-template-columns: 110px 80px 1fr 1fr 1fr auto; background: rgba(255, 107, 107, 0.05);">
+          <div>${t.date}</div>
+          <div style="color:var(--red); font-weight:700;">📤 ${t.asset}</div>
+          <div style="color: var(--red);">-${qty.toFixed(8)}</div>
+          <div>@ $${t.price.toFixed(2)}</div>
+          <div style="color: var(--green);">+$${usdReceived.toFixed(2)}</div>
+          <button class="tx-delete" onclick="deleteTransaction(${realIdx})" title="Borrar">✕</button>
+        </div>`;
+    } else if (type === 'usdt_in') {
+      return `
+        <div class="tx-row" style="grid-template-columns: 110px 80px 1fr 2fr auto; background: rgba(88, 166, 255, 0.05);">
+          <div>${t.date}</div>
+          <div style="color:var(--blue); font-weight:700;">💵 USDT</div>
+          <div style="color: var(--green);">+$${t.amount.toFixed(2)}</div>
+          <div style="color: var(--text-dim); font-style: italic; font-size: 12px;">${t.note || 'Aporte USDT'}</div>
+          <button class="tx-delete" onclick="deleteTransaction(${realIdx})" title="Borrar">✕</button>
+        </div>`;
+    } else if (type === 'usdt_out') {
+      return `
+        <div class="tx-row" style="grid-template-columns: 110px 80px 1fr 2fr auto; background: rgba(255, 126, 63, 0.05);">
+          <div>${t.date}</div>
+          <div style="color:var(--orange); font-weight:700;">🚪 USDT</div>
+          <div style="color: var(--red);">-$${t.amount.toFixed(2)}</div>
+          <div style="color: var(--text-dim); font-style: italic; font-size: 12px;">${t.note || 'Retiro USDT'}</div>
+          <button class="tx-delete" onclick="deleteTransaction(${realIdx})" title="Borrar">✕</button>
+        </div>`;
+    }
+    return '';
   }).join('');
-  document.getElementById('txList').innerHTML = txHTML || '<div style="text-align:center;padding:24px;color:var(--text-dim);">Sin compras registradas todavía</div>';
+  document.getElementById('txList').innerHTML = txHTML || '<div style="text-align:center;padding:24px;color:var(--text-dim);">Sin transacciones registradas todavía</div>';
   document.getElementById('txCount').textContent = transactions.length;
+  
+  // USDT balance
+  const usdtBalance = getUSDTBalance();
+  const usdtFromSells = transactions.filter(t => t.type === 'sell').reduce((s, t) => s + (t.amount || 0), 0);
+  const usdtFromIns = transactions.filter(t => t.type === 'usdt_in').reduce((s, t) => s + (t.amount || 0), 0);
+  const usdtFromOuts = transactions.filter(t => t.type === 'usdt_out').reduce((s, t) => s + (t.amount || 0), 0);
+  
+  const usdtBalanceEl = document.getElementById('usdtBalance');
+  if (usdtBalanceEl) usdtBalanceEl.textContent = `$${usdtBalance.toFixed(2)}`;
+  const usdtFromSellsEl = document.getElementById('usdtFromSells');
+  if (usdtFromSellsEl) usdtFromSellsEl.textContent = `$${usdtFromSells.toFixed(2)}`;
+  const usdtFromInsEl = document.getElementById('usdtFromIns');
+  if (usdtFromInsEl) usdtFromInsEl.textContent = `$${usdtFromIns.toFixed(2)}`;
+  const usdtFromOutsEl = document.getElementById('usdtFromOuts');
+  if (usdtFromOutsEl) usdtFromOutsEl.textContent = `$${usdtFromOuts.toFixed(2)}`;
   
   // Render other tabs
   renderDistribution(positions, totalValue);
@@ -1733,20 +1997,58 @@ function deleteJournalEntry(idx) {
 // ============================================
 // SELL RULES TAB
 // ============================================
-function renderSellRules(positions) {
+function saveSellRules() {
+  sellRules.prevAth.BTC = parseFloat(document.getElementById('ruleAthBTC').value) || sellRules.prevAth.BTC;
+  sellRules.prevAth.ETH = parseFloat(document.getElementById('ruleAthETH').value) || sellRules.prevAth.ETH;
+  sellRules.prevAth.SOL = parseFloat(document.getElementById('ruleAthSOL').value) || sellRules.prevAth.SOL;
+  sellRules.prevAth.BNB = parseFloat(document.getElementById('ruleAthBNB').value) || sellRules.prevAth.BNB;
+  sellRules.multipliers.rule1 = parseFloat(document.getElementById('ruleMult1').value) || 1.0;
+  sellRules.multipliers.rule2 = parseFloat(document.getElementById('ruleMult2').value) || 1.5;
+  sellRules.multipliers.rule3 = parseFloat(document.getElementById('ruleMult3').value) || 2.0;
+  sellRules.multipliers.rule4_dd = parseFloat(document.getElementById('ruleMult4').value) || 0.25;
+  sellRules.sellPct = (parseFloat(document.getElementById('ruleSellPct').value) || 30) / 100;
+  // Reset notified rules cuando cambian las reglas (para que vuelva a notificar)
+  notifiedRules = [];
+  localStorage.setItem('cryptoDCA_notifiedRules', JSON.stringify(notifiedRules));
+  saveState();
+  render();
+  alert('✓ Reglas actualizadas');
+}
+
+function resetSellRules() {
+  if (!confirm('¿Resetear todas las reglas a sus valores por defecto?')) return;
+  sellRules = JSON.parse(JSON.stringify(DEFAULT_SELL_RULES));
+  populateRulesInputs();
+  saveState();
+  render();
+}
+
+function populateRulesInputs() {
+  document.getElementById('ruleAthBTC').value = sellRules.prevAth.BTC;
+  document.getElementById('ruleAthETH').value = sellRules.prevAth.ETH;
+  document.getElementById('ruleAthSOL').value = sellRules.prevAth.SOL;
+  document.getElementById('ruleAthBNB').value = sellRules.prevAth.BNB;
+  document.getElementById('ruleMult1').value = sellRules.multipliers.rule1;
+  document.getElementById('ruleMult2').value = sellRules.multipliers.rule2;
+  document.getElementById('ruleMult3').value = sellRules.multipliers.rule3;
+  document.getElementById('ruleMult4').value = sellRules.multipliers.rule4_dd;
+  document.getElementById('ruleSellPct').value = (sellRules.sellPct * 100).toFixed(0);
+}
   let triggeredRules = [];  // Track all triggered rules across assets
   let closeRules = [];       // Rules within 80% of trigger
   
   const rulesHTML = ASSETS.map(a => {
     const pos = positions.find(p => p.ticker === a.ticker);
-    const prevAth = PREV_CYCLE_ATH[a.ticker];
+    const prevAth = sellRules.prevAth[a.ticker];
     const currentPrice = pos.currentPrice;
+    const m = sellRules.multipliers;
+    const sellPctText = `Vender ${(sellRules.sellPct * 100).toFixed(0)}%`;
     
     const rules = [
-      { name: `Regla 1: precio > ATH ciclo anterior ($${prevAth.toLocaleString()})`, target: prevAth, action: 'Vender 30%' },
-      { name: `Regla 2: precio > ATH × 1.5 ($${(prevAth * 1.5).toLocaleString()})`, target: prevAth * 1.5, action: 'Vender 30% más' },
-      { name: `Regla 3: precio > ATH × 2 ($${(prevAth * 2).toLocaleString()})`, target: prevAth * 2, action: 'Vender 30% más' },
-      { name: `Regla 4: caída -25% desde peak local`, target: null, action: 'Vender 30% (señal fin bull)' },
+      { name: `Regla 1: precio > ATH × ${m.rule1} ($${(prevAth * m.rule1).toLocaleString()})`, target: prevAth * m.rule1, action: sellPctText },
+      { name: `Regla 2: precio > ATH × ${m.rule2} ($${(prevAth * m.rule2).toLocaleString()})`, target: prevAth * m.rule2, action: sellPctText + ' más' },
+      { name: `Regla 3: precio > ATH × ${m.rule3} ($${(prevAth * m.rule3).toLocaleString()})`, target: prevAth * m.rule3, action: sellPctText + ' más' },
+      { name: `Regla 4: caída -${(m.rule4_dd * 100).toFixed(0)}% desde peak local`, target: null, action: sellPctText + ' (señal fin bull)' },
     ];
     
     const ruleHTML = rules.map((r, ruleIdx) => {
@@ -1900,6 +2202,35 @@ if ('Notification' in window && Notification.permission === 'default') {
 // ============================================
 // TRANSACTIONS
 // ============================================
+function setTxType(type) {
+  document.querySelectorAll('#txTypeBuy, #txTypeSell, #txTypeUsdtIn, #txTypeUsdtOut').forEach(b => {
+    b.classList.remove('primary');
+  });
+  
+  document.getElementById('formBuy').style.display = 'none';
+  document.getElementById('formSell').style.display = 'none';
+  document.getElementById('formUsdtIn').style.display = 'none';
+  document.getElementById('formUsdtOut').style.display = 'none';
+  
+  if (type === 'buy') {
+    document.getElementById('txTypeBuy').classList.add('primary');
+    document.getElementById('formBuy').style.display = 'grid';
+  } else if (type === 'sell') {
+    document.getElementById('txTypeSell').classList.add('primary');
+    document.getElementById('formSell').style.display = 'grid';
+    if (!document.getElementById('txSellDate').value) document.getElementById('txSellDate').valueAsDate = new Date();
+    updateMaxQty();
+  } else if (type === 'usdt_in') {
+    document.getElementById('txTypeUsdtIn').classList.add('primary');
+    document.getElementById('formUsdtIn').style.display = 'block';
+    if (!document.getElementById('txUsdtInDate').value) document.getElementById('txUsdtInDate').valueAsDate = new Date();
+  } else if (type === 'usdt_out') {
+    document.getElementById('txTypeUsdtOut').classList.add('primary');
+    document.getElementById('formUsdtOut').style.display = 'block';
+    if (!document.getElementById('txUsdtOutDate').value) document.getElementById('txUsdtOutDate').valueAsDate = new Date();
+  }
+}
+
 function addTransaction() {
   const date = document.getElementById('txDate').value;
   const asset = document.getElementById('txAsset').value;
@@ -1911,12 +2242,90 @@ function addTransaction() {
     return;
   }
   
-  transactions.push({ date, asset, amount, price });
+  transactions.push({ type: 'buy', date, asset, amount, price });
   saveState();
   render();
   
   document.getElementById('txAmount').value = '';
   document.getElementById('txPrice').value = '';
+}
+
+function addSellTransaction() {
+  const date = document.getElementById('txSellDate').value;
+  const asset = document.getElementById('txSellAsset').value;
+  const qty = parseFloat(document.getElementById('txSellQty').value);
+  const price = parseFloat(document.getElementById('txSellPrice').value);
+  
+  if (!date || !asset || !qty || !price || qty <= 0 || price <= 0) {
+    alert('Completá todos los campos con valores válidos');
+    return;
+  }
+  
+  // Verificar que tiene suficiente qty
+  const pos = getPosition(asset);
+  if (qty > pos.totalQty + 1e-9) {
+    alert(`No tenés suficiente ${asset}. Holdings actual: ${pos.totalQty.toFixed(8)}`);
+    return;
+  }
+  
+  const usdReceived = qty * price;
+  transactions.push({ type: 'sell', date, asset, qty, price, amount: usdReceived });
+  saveState();
+  render();
+  
+  document.getElementById('txSellQty').value = '';
+  document.getElementById('txSellPrice').value = '';
+  alert(`✓ Venta registrada: ${qty.toFixed(8)} ${asset} por $${usdReceived.toFixed(2)} USDT`);
+}
+
+function addUsdtIn() {
+  const date = document.getElementById('txUsdtInDate').value;
+  const amount = parseFloat(document.getElementById('txUsdtInAmount').value);
+  const note = document.getElementById('txUsdtInNote').value.trim();
+  
+  if (!date || !amount || amount <= 0) {
+    alert('Completá fecha y monto válido');
+    return;
+  }
+  
+  transactions.push({ type: 'usdt_in', date, asset: 'USDT', amount, note });
+  saveState();
+  render();
+  
+  document.getElementById('txUsdtInAmount').value = '';
+  document.getElementById('txUsdtInNote').value = '';
+}
+
+function addUsdtOut() {
+  const date = document.getElementById('txUsdtOutDate').value;
+  const amount = parseFloat(document.getElementById('txUsdtOutAmount').value);
+  const note = document.getElementById('txUsdtOutNote').value.trim();
+  
+  if (!date || !amount || amount <= 0) {
+    alert('Completá fecha y monto válido');
+    return;
+  }
+  
+  // Verificar que hay suficiente USDT
+  const balance = getUSDTBalance();
+  if (amount > balance + 0.01) {
+    alert(`No tenés suficiente USDT. Disponible: $${balance.toFixed(2)}`);
+    return;
+  }
+  
+  transactions.push({ type: 'usdt_out', date, asset: 'USDT', amount, note });
+  saveState();
+  render();
+  
+  document.getElementById('txUsdtOutAmount').value = '';
+  document.getElementById('txUsdtOutNote').value = '';
+}
+
+function deleteTransaction(idx) {
+  if (!confirm('¿Borrar esta transacción del historial?')) return;
+  transactions.splice(idx, 1);
+  saveState();
+  render();
 }
 
 function useCurrentPrice() {
@@ -1927,10 +2336,19 @@ function useCurrentPrice() {
     return;
   }
   document.getElementById('txPrice').value = currentPrice.toFixed(2);
-  // Set today's date if empty
   if (!document.getElementById('txDate').value) {
     document.getElementById('txDate').valueAsDate = new Date();
   }
+}
+
+function useSellCurrentPrice() {
+  const asset = document.getElementById('txSellAsset').value;
+  const currentPrice = prices[asset];
+  if (!currentPrice || currentPrice === 0) {
+    alert('Precio actual no disponible. Click "↻ Actualizar precios" primero.');
+    return;
+  }
+  document.getElementById('txSellPrice').value = currentPrice.toFixed(2);
 }
 
 function updateCurrentPriceButton() {
@@ -1942,11 +2360,20 @@ function updateCurrentPriceButton() {
   }
 }
 
-function deleteTransaction(idx) {
-  if (!confirm('¿Borrar esta compra del historial?')) return;
-  transactions.splice(idx, 1);
-  saveState();
-  render();
+function updateSellPriceButton() {
+  // Could add similar tooltip
+}
+
+function useMaxQty() {
+  const asset = document.getElementById('txSellAsset').value;
+  const pos = getPosition(asset);
+  document.getElementById('txSellQty').value = pos.totalQty.toFixed(8);
+}
+
+function updateMaxQty() {
+  const asset = document.getElementById('txSellAsset').value;
+  const pos = getPosition(asset);
+  document.getElementById('txSellQty').placeholder = `Cantidad a vender (max: ${pos.totalQty.toFixed(8)})`;
 }
 
 // ============================================
@@ -2009,6 +2436,7 @@ function resetData() {
 // ============================================
 document.getElementById('txDate').valueAsDate = new Date();
 loadState();
+setTxType('buy');  // Default: buy form visible
 render();
 refreshPrices();
 setInterval(refreshPrices, 60000);
