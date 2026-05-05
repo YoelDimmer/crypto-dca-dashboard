@@ -941,9 +941,10 @@ button.danger:hover { background: var(--red); color: var(--bg); }
         <div style="font-size: 28px; font-weight: 700; color: var(--green); font-family: var(--mono);" id="usdtBalance">$0.00</div>
       </div>
       <div style="text-align: right; font-size: 12px; font-family: var(--mono); color: var(--text-dim); line-height: 1.6;">
-        De ventas: <span id="usdtFromSells" style="color: var(--text);">$0</span><br>
-        Aportes: <span id="usdtFromIns" style="color: var(--text);">$0</span><br>
-        Retiros: <span id="usdtFromOuts" style="color: var(--text);">$0</span>
+        + Ventas: <span id="usdtFromSells" style="color: var(--green);">$0</span><br>
+        + Aportes: <span id="usdtFromIns" style="color: var(--green);">$0</span><br>
+        - Compras: <span id="usdtFromBuys" style="color: var(--red);">$0</span><br>
+        - Retiros: <span id="usdtFromOuts" style="color: var(--red);">$0</span>
       </div>
     </div>
 
@@ -1153,13 +1154,18 @@ function getPosition(ticker) {
 }
 
 function getUSDTBalance() {
-  // Suma de: ventas de assets + aportes manuales - deploys
+  // USDT disponible:
+  //   + ventas de assets (recibís USDT)
+  //   + aportes manuales (cargaste USDT al exchange)
+  //   - compras de assets (gastaste USDT)
+  //   - retiros manuales (sacaste USDT del exchange)
   let balance = 0;
   for (const tx of transactions) {
     const type = tx.type || 'buy';
     if (type === 'sell') balance += (tx.amount || 0);
     else if (type === 'usdt_in') balance += (tx.amount || 0);
     else if (type === 'usdt_out') balance -= (tx.amount || 0);
+    else if (type === 'buy') balance -= (tx.amount || 0);
   }
   return Math.max(0, balance);
 }
@@ -1218,10 +1224,15 @@ function render() {
   const totalRealizedFromSells = positions.reduce((s, p) => s + p.realizedFromSells, 0);
   const usdtBalance = getUSDTBalance();
   const totalEquity = totalValue + usdtBalance;
-  // P&L total = (valor cripto + USDT realizado de ventas) - invertido en cripto
-  // Pero cuidado: USDT también puede venir de aportes manuales que no son ganancia
-  const totalPnL = totalEquity - totalInvested - getUsdtNetIns();
-  const totalPnLPct = totalInvested > 0 ? (totalPnL / totalInvested) * 100 : 0;
+  
+  // P&L correcto:
+  //   Aportaste netto: usdtNetIns (USDT in - USDT out)
+  //   Tenés ahora: totalEquity (cripto + USDT)
+  //   Ganancia/pérdida real = totalEquity - aporte neto
+  const usdtNetIns = getUsdtNetIns();
+  const totalPnL = totalEquity - usdtNetIns;
+  // % se calcula sobre el aporte neto (lo que pusiste de tu plata)
+  const totalPnLPct = usdtNetIns > 0 ? (totalPnL / usdtNetIns) * 100 : 0;
   
   document.getElementById('totalInvested').textContent = `$${totalInvested.toFixed(2)}`;
   document.getElementById('totalValue').textContent = `$${totalValue.toFixed(2)}`;
@@ -1368,6 +1379,7 @@ function render() {
   const usdtFromSells = transactions.filter(t => t.type === 'sell').reduce((s, t) => s + (t.amount || 0), 0);
   const usdtFromIns = transactions.filter(t => t.type === 'usdt_in').reduce((s, t) => s + (t.amount || 0), 0);
   const usdtFromOuts = transactions.filter(t => t.type === 'usdt_out').reduce((s, t) => s + (t.amount || 0), 0);
+  const usdtFromBuys = transactions.filter(t => (t.type || 'buy') === 'buy').reduce((s, t) => s + (t.amount || 0), 0);
   
   const usdtBalanceEl = document.getElementById('usdtBalance');
   if (usdtBalanceEl) usdtBalanceEl.textContent = `$${usdtBalance.toFixed(2)}`;
@@ -1375,6 +1387,8 @@ function render() {
   if (usdtFromSellsEl) usdtFromSellsEl.textContent = `$${usdtFromSells.toFixed(2)}`;
   const usdtFromInsEl = document.getElementById('usdtFromIns');
   if (usdtFromInsEl) usdtFromInsEl.textContent = `$${usdtFromIns.toFixed(2)}`;
+  const usdtFromBuysEl = document.getElementById('usdtFromBuys');
+  if (usdtFromBuysEl) usdtFromBuysEl.textContent = `$${usdtFromBuys.toFixed(2)}`;
   const usdtFromOutsEl = document.getElementById('usdtFromOuts');
   if (usdtFromOutsEl) usdtFromOutsEl.textContent = `$${usdtFromOuts.toFixed(2)}`;
   
@@ -2243,6 +2257,29 @@ function addTransaction() {
     return;
   }
   
+  // Verificar USDT disponible
+  const usdtBalance = getUSDTBalance();
+  
+  if (amount > usdtBalance + 0.01) {
+    // No hay suficiente USDT
+    const missing = amount - usdtBalance;
+    const msg = `No tenés suficiente USDT.\n\nUSDT disponible: $${usdtBalance.toFixed(2)}\nFalta: $${missing.toFixed(2)}\n\n¿Querés agregar $${missing.toFixed(2)} USDT automáticamente y continuar con la compra?\n\n(Esto es para casos donde pagás con transferencia o de otra forma)`;
+    
+    if (!confirm(msg)) {
+      return;  // Usuario canceló
+    }
+    
+    // Agregar USDT automático con nota
+    transactions.push({ 
+      type: 'usdt_in', 
+      date, 
+      asset: 'USDT', 
+      amount: missing, 
+      note: `Auto: para compra ${asset}` 
+    });
+  }
+  
+  // Registrar la compra (descuenta USDT automáticamente)
   transactions.push({ type: 'buy', date, asset, amount, price });
   saveState();
   render();
